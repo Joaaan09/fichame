@@ -2,6 +2,7 @@
 const User = require('../models/User.js');
 const bcrypt = require("bcryptjs");
 const validate = require("../helpers/validate");
+const jwt = require("../services/jwt");
 
 // Registrar usuario
 const register = async (req, res) => {
@@ -64,8 +65,64 @@ const register = async (req, res) => {
     }
 }
 
+// Login de usuario
+const login = async (req, res) => {
+    try {
+        let params = req.body;
+
+        // Comprobar que los datos llegan correctamente
+        if (!params.email || !params.password) {
+            return res.status(400).json({
+                status: "error",
+                message: "Faltan datos por enviar"
+            });
+        }
+
+        // Buscar usuario
+        const userLogin = await User.findOne({ email: params.email.toLowerCase() });
+
+        // Si no existe el usuario
+        if (!userLogin) {
+            return res.status(400).json({
+                status: "error",
+                message: "El usuario no existe"
+            });
+        }
+
+        // Comprobar que la contraseña sea correcta
+        const pwd = bcrypt.compareSync(params.password, userLogin.password);
+
+        if (!pwd) {
+            return res.status(400).json({
+                status: "error",
+                message: "La contraseña es incorrecta"
+            });
+        }
+
+        // Conseguir token  
+        const token = jwt.createToken(userLogin);
+
+        // Devolver respuesta
+        return res.status(200).json({
+            status: "success",
+            message: "Usuario logueado correctamente",
+            token,
+            user: {
+                id: userLogin._id,
+                name: userLogin.name,
+                email: userLogin.email
+            }
+        });
+
+
+    } catch (error) {
+
+    }
+}
+
 
 // Exportar las funciones
 module.exports = {
-    register
+    register,
+    login
 };
