@@ -120,9 +120,104 @@ const login = async (req, res) => {
     }
 }
 
+// Perfil de usuario
+const profile = async (req, res) => {
+    try {
+        // Obtener datos del usuario
+        const user = await User.findById(req.params.id);
+
+        // Devolver respuesta
+        return res.status(200).json({
+            status: "success",
+            message: "Usuario obtenido correctamente",
+            user
+        });
+    } catch (error) {
+        return res.status(500).json({
+            status: "error",
+            message: "Error al obtener usuario"
+        });
+    }
+}
+
+// Editar usuario
+const update = async (req, res) => {
+    try {
+
+        // Usuario a editar
+        const userIdentity = req.user;
+        const userToUpdate = req.body;
+
+        // Validar los datos (password es opcional en update)
+        if (!userToUpdate.name || !userToUpdate.email) {
+            return res.status(400).json({
+                status: "error",
+                message: "Nombre y email son obligatorios"
+            });
+        }
+
+        // Control de usuarios duplicados
+        const users = await User.find({
+            $or: [
+                { email: userToUpdate.email.toLowerCase() }
+            ]
+        });
+
+        let userIsset = false;
+        users.forEach(user => {
+            if (userToUpdate && user.id != userIdentity.id) {
+                userIsset = true;
+            }
+
+        });
+
+        if (userIsset) {
+            return res.status(200).json({
+                status: "error",
+                message: "El usuario ya existe"
+            });
+        }
+        // Ciframos de nuevo la contraseña
+        if (userToUpdate.password) {
+            const pwd = await bcrypt.hash(userToUpdate.password, 10);
+            userToUpdate.password = pwd;
+        } else {
+            delete userToUpdate.password;
+        }
+
+        // Actulizar usuario
+        try {
+            const userUpdated = await User.findByIdAndUpdate(userIdentity.id, userToUpdate, { new: true });
+            return res.status(200).json({
+                status: "success",
+                message: "Usuario actualizado correctamente",
+                user: {
+                    id: userUpdated._id,
+                    name: userUpdated.name,
+                    email: userUpdated.email
+                }
+            });
+        } catch (error) {
+            return res.status(500).json({
+                status: "error",
+                message: "Error al actualizar usuario"
+            });
+        }
+
+
+
+    } catch (error) {
+        return res.status(500).json({
+            status: "error",
+            message: "Error al editar usuario"
+        });
+    }
+}
+
 
 // Exportar las funciones
 module.exports = {
     register,
-    login
+    login,
+    update
 };
