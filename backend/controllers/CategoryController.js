@@ -119,6 +119,7 @@ const remove = async (req, res) => {
         });
     }
 
+    // Editar categoria
 
 
 
