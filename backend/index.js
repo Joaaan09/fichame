@@ -21,10 +21,14 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true })); // Cualquier dato que llegue con el formato url enconded lo codificara como un objeto js
 
-// Ruta de prueba
-app.get("/", (req, res) => {
-    return res.status(200).send("<h1>API Fichame arrancada</h1>");
-});
+// Rutas
+// Configuración de rutas
+const userRoutes = require('./routes/user');
+
+
+// Rutas de usuarios
+app.use("/api/user", userRoutes);
+
 
 // Poner el servidor a escuchar
 app.listen(puerto, () => {
