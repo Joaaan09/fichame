@@ -24,10 +24,12 @@ app.use(express.urlencoded({ extended: true })); // Cualquier dato que llegue co
 // Rutas
 // Configuración de rutas
 const userRoutes = require('./routes/user');
+const categoryRoutes = require('./routes/category');
 
 
 // Rutas de usuarios
 app.use("/api/user", userRoutes);
+app.use("/api/category", categoryRoutes);
 
 
 // Poner el servidor a escuchar
