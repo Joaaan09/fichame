@@ -1,0 +1,43 @@
+version: "3.8"
+
+services:
+  server:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: fichame-backend
+    ports:
+      - "3000:3000"
+    env_file:
+      - ./backend/.env
+    volumes:
+      - ./backend/uploads:/app/uploads
+    depends_on:
+      - mongodb
+    networks:
+      - reverse_proxy_network
+
+  client:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: fichame-frontend
+    depends_on:
+      - server
+    networks:
+      - reverse_proxy_network
+
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb_fichame
+    volumes:
+      - fichame_data:/data/db
+    networks:
+      - reverse_proxy_network
+
+volumes:
+  fichame_data:
+
+networks:
+  reverse_proxy_network:
+    external: true
