@@ -25,11 +25,13 @@ app.use(express.urlencoded({ extended: true })); // Cualquier dato que llegue co
 // Configuración de rutas
 const userRoutes = require('./routes/user');
 const categoryRoutes = require('./routes/category');
+const workSessionRoutes = require('./routes/workSession');
 
 
 // Rutas de usuarios
 app.use("/api/user", userRoutes);
 app.use("/api/category", categoryRoutes);
+app.use("/api/work-session", workSessionRoutes);
 
 
 // Poner el servidor a escuchar

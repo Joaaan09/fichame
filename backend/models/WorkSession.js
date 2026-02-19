@@ -1,8 +1,14 @@
 const { Schema, model } = require('mongoose');
 
 const workSessionSchema = new Schema({
-    userId: ObjectId,
-    categoryId: ObjectId,
+    user: {
+        type: Schema.ObjectId,
+        ref: "User"
+    },
+    categoryId: {
+        type: Schema.ObjectId,
+        ref: "Category"
+    },
     description: String,
     checkIn: Date,
     checkOut: Date,
