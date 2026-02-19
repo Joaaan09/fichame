@@ -1,0 +1,31 @@
+   /* --- RESPONSIVE ADJUSTMENTS --- */
+   @media (max-width: 768px) {
+       .desktop-nav {
+           display: none;
+       }
+
+       .mobile-nav {
+           display: block;
+       }
+
+       .timer-display {
+           font-size: 4.5rem;
+       }
+
+       .action-button {
+           width: 180px;
+           /* Botón más grande en móvil para facilitar toque */
+           height: 180px;
+           font-size: 1.25rem;
+       }
+
+       .header {
+           padding: 20px;
+       }
+
+       .bottom-stats {
+           bottom: 120px;
+       }
+
+       /* Subir para dejar sitio al menú móvil */
+   }
