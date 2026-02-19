@@ -7,6 +7,7 @@ const { auth } = require("../middlewares/auth");
 router.post("/create", auth, CategoryController.create);
 router.get("/list", auth, CategoryController.list);
 router.delete("/remove/:id", auth, CategoryController.remove);
+router.put("/update/:id", auth, CategoryController.update);
 
 // Exportar rutas
 module.exports = router;

@@ -219,5 +219,6 @@ const update = async (req, res) => {
 module.exports = {
     register,
     login,
-    update
+    update,
+    profile
 };

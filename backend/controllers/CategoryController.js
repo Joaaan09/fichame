@@ -118,12 +118,60 @@ const remove = async (req, res) => {
             error
         });
     }
+}
 
-    // Editar categoria
+// Editar categoria
+const update = async (req, res) => {
+    try {
+        // Obtener id de la categoria
+        const categoryId = req.params.id;
 
+        // Obtener datos del body
+        const params = req.body;
 
+        // Validar los datos
+        if (!params.name || !params.color) {
+            return res.status(500).json({
+                status: "error",
+                message: "Faltan datos por enviar"
+            });
+        }
 
+        // Buscar la categoria para actualizar
+        const category = await Category.findById(categoryId);
 
+        // Control de categorias
+        if (!category) {
+            return res.status(404).json({
+                status: "error",
+                message: "Categoria no encontrada"
+            });
+        }
+
+        // Control de que la categoria pertenezca al usuario
+        if (category.user.toString() !== req.user.id) {
+            return res.status(403).json({
+                status: "error",
+                message: "No tienes permiso para editar esta categoria"
+            });
+        }
+
+        // Actualizar categoria
+        const categoryUpdated = await Category.findByIdAndUpdate(categoryId, params, { new: true });
+
+        // Devolver respuesta
+        return res.status(200).json({
+            status: "success",
+            message: "Categoria actualizada correctamente",
+            category: categoryUpdated
+        });
+
+    } catch (error) {
+        return res.status(500).json({
+            status: "error",
+            message: "Error al editar categoria"
+        });
+    }
 }
 
 
@@ -131,5 +179,6 @@ const remove = async (req, res) => {
 module.exports = {
     create,
     list,
-    remove
+    remove,
+    update
 };
