@@ -262,6 +262,35 @@ body {
     stroke-width: 2.5px;
 }
 
+/* Dropdown de categorías */
+.category-selector {
+    position: relative;
+    /* Ya lo tienes, pero asegúrate */
+}
+
+.category-dropdown {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background: var(--bg-card);
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    padding: 8px 0;
+    min-width: 150px;
+    z-index: 100;
+}
+
+.category-dropdown div {
+    padding: 10px 16px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.category-dropdown div:hover {
+    background: var(--bg-body);
+}
+
 /* --- DESKTOP NAVIGATION --- */
 .desktop-nav {
     position: absolute;
