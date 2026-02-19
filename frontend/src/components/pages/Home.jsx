@@ -9,6 +9,7 @@ export const Home = () => {
     const [timer, setTimer] = useState("00:00:00");
     const intervalRef = useRef(null);
     const { selectedCategory } = useOutletContext();
+    const [workSessionId, setWorkSessionId] = useState(null);
 
     // Limpiar intervalo al desmontar componente
     useEffect(() => {
@@ -16,6 +17,23 @@ export const Home = () => {
             if (intervalRef.current) clearInterval(intervalRef.current);
         };
     }, []);
+
+    // Detectar si hay una jornada activa
+    useEffect(() => {
+    const checkActiveSession = async () => {
+        const token = localStorage.getItem("token");
+        const res = await fetch("/api/work-session/active", {
+            headers: { "Authorization": token }
+        });
+        const data = await res.json();
+        if (data.status === "success" && data.workSession) {
+            setIsWorking(true);
+            setStartTime(new Date(data.workSession.checkIn).getTime());
+            setWorkSessionId(data.workSession._id);
+        }
+    };
+    checkActiveSession();
+}, []);
 
     // Actualizar timer cada segundo cuando está trabajando
     useEffect(() => {
@@ -47,20 +65,44 @@ export const Home = () => {
             // START
             setIsWorking(true);
             setStartTime(Date.now());
+
             // Petición
             const request = await fetch("/api/work-session/start", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
+                    "Authorization": `${localStorage.getItem("token")}`
                 },
                 body: JSON.stringify({
                     checkIn: startTime,
+                    categoryId: selectedCategory._id
                 }),
             });
+
+            const data = await request.json();
+
+            if (data.status === "success") {
+                setWorkSessionId(data.workSession._id);
+            }
+
         } else {
             // STOP
             setIsWorking(false);
             setTimer("00:00:00");
+
+            // Petición
+            const request = await fetch("/api/work-session/end", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `${localStorage.getItem("token")}`
+                },
+                body: JSON.stringify({
+                    checkOut: startTime,
+                    workSessionId: workSessionId
+                }),
+            });
+
         }
     };
 

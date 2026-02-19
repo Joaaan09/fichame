@@ -10,6 +10,7 @@ router.post("/create", auth, WorkSessionController.create);
 router.put("/update/:id", auth, WorkSessionController.update);
 router.get("/list", auth, WorkSessionController.list);
 router.delete("/remove/:id", auth, WorkSessionController.remove);
+router.get("/active", auth, WorkSessionController.active);
 
 // Exportar router
 module.exports = router;

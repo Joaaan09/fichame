@@ -249,6 +249,19 @@ const remove = async (req, res) => {
     }
 }
 
+// WorkSessionController.js
+const active = async (req, res) => {
+    const workSession = await WorkSession.findOne({
+        user: req.user.id,
+        checkOut: { $exists: false }
+    });
+
+    return res.json({
+        status: "success",
+        workSession: workSession || null
+    });
+};
+
 
 // Exportar funciones
 module.exports = {
@@ -257,6 +270,7 @@ module.exports = {
     create,
     update,
     list,
-    remove
+    remove,
+    active
 };
 
