@@ -1,4 +1,4 @@
-export const formatDate = (session) => {
+export const formatDate = (session, complete) => {
     if (!session || !session.checkOut) return "Sin sesiones";
     const checkIn = new Date(session.checkIn);
     const checkOut = new Date(session.checkOut);
@@ -7,5 +7,8 @@ export const formatDate = (session) => {
     const timeIn = checkIn.toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" });
     const timeOut = checkOut.toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" });
 
-    return `${date}\n${timeIn} - ${timeOut}`;
+    if (complete) {
+        return `${date}\n${timeIn} - ${timeOut}`;
+    }
+    return `${timeIn} - ${timeOut}`;
 }

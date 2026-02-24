@@ -19,3 +19,18 @@ export const useWorkSessions = () => {
 
     return { sessions, loading, refetch: fetchSessions };
 };
+
+export const groupSessionsByDate = (sessions) => {
+    return sessions.reduce((acc, session) => {
+        const date = new Date(session.checkIn).toLocaleDateString('es-ES', {
+            weekday: 'long',
+            day: 'numeric',
+            month: 'long'
+        });
+        if (!acc[date]) {
+            acc[date] = [];
+        }
+        acc[date].push(session);
+        return acc;
+    }, {});
+};
