@@ -31,7 +31,7 @@ export const PrivateLayout = () => {
             <Header categories={categories} selectedCategory={selectedCategory} setSelectedCategory={setSelectedCategory} />
             <main className="main-stage">
                 {auth?.id ?
-                    <Outlet context={{ selectedCategory }} />
+                    <Outlet context={{ selectedCategory, categories }} />
                     :
                     <Navigate to="/" />
                 }

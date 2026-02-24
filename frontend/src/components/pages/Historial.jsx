@@ -3,6 +3,7 @@ import React from 'react';
 import { useWorkSessions, groupSessionsByDate } from '../../hooks/useWorkSessions';
 import { useState } from 'react';
 import { Modal } from '../common/Modal';
+import { useOutletContext } from 'react-router-dom';
 
 export const Historial = () => {
     // Obtenemos las sesiones del hook
@@ -11,6 +12,8 @@ export const Historial = () => {
     const [mostrarModal, setMostrarModal] = useState(false);
     const [selectedSession, setSelectedSession] = useState(null);
     const token = localStorage.getItem("token");
+
+    const { categories } = useOutletContext();
 
     const handleDelete = async () => {
         const request = await fetch("/api/work-session/remove/" + selectedSession?._id, {
@@ -25,11 +28,36 @@ export const Historial = () => {
             setMostrarModal(false);
             refetch();
         }
-
-
     };
 
+    const handleEdit = async (checkIn, checkOut, category, description) => {
+        const request = await fetch("/api/work-session/update/" + selectedSession?._id, {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": token
+            },
+            body: JSON.stringify({
+                checkIn: new Date(checkIn).toISOString(), // Convertimos a formato ISO real
+                checkOut: new Date(checkOut).toISOString(),
+                categoryId: category,
+                description
+            })
+        });
+
+        if (request.ok) {
+            setMostrarModal(false);
+            refetch();
+        }
+    };
+
+
     const openDeleteModal = (session) => {
+        setSelectedSession(session);
+        setMostrarModal(true);
+    };
+
+    const openEditModal = (session) => {
         setSelectedSession(session);
         setMostrarModal(true);
     };
@@ -42,6 +70,23 @@ export const Historial = () => {
         }
     };
 
+    const fechaParaInput = (fechaISO) => {
+        if (!fechaISO) return "";
+        const date = new Date(fechaISO);
+
+        // Obtenemos los componentes en hora local
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+
+        // Devolvemos el formato exacto que pide el input: YYYY-MM-DDTHH:mm
+        return `${year}-${month}-${day}T${hours}:${minutes}`;
+    }
+
+
+
     // Agrupamos las sesiones usando la función que creaste
     // 'grouped' será un objeto tipo: { "lunes...": [sesion1, sesion2], "martes...": [...] }
     const grouped = groupSessionsByDate(sessions);
@@ -50,6 +95,14 @@ export const Historial = () => {
 
     return (
         <section className="page-content">
+            <header className="history-header">
+                <h2>Historial</h2>
+                <button className="btn-add-session" onClick={() => {/* Aquí irá la lógica de crear manual */ }}>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14" /><path d="M12 5v14" /></svg>
+                    Nueva jornada
+                </button>
+            </header>
+
             {Object.keys(grouped).map(date => {
                 return (
                     <div className="history-group" key={date}>
@@ -90,7 +143,7 @@ export const Historial = () => {
                                             </button>
                                             {activeDropdown === session._id && (
                                                 <div className="dropdown">
-                                                    <button className="dropdown-item">
+                                                    <button className="dropdown-item" onClick={() => openEditModal(session)}>
                                                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#34C759" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="icon icon-tabler icons-tabler-outline icon-tabler-clock-edit"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M21 12a9 9 0 1 0 -9.972 8.948c.32 .034 .644 .052 .972 .052" /><path d="M12 7v5l2 2" /><path d="M18.42 15.61a2.1 2.1 0 0 1 2.97 2.97l-3.39 3.42h-3v-3l3.42 -3.39" /></svg>
                                                     </button>
 
@@ -134,6 +187,76 @@ export const Historial = () => {
                             }}
                         >
                             Eliminar
+                        </button>
+                    </div>
+                </div>
+            </Modal>
+
+            <Modal
+                isOpen={mostrarModal && !!selectedSession}
+                onClose={() => setMostrarModal(false)}
+                title="Editar sesión"
+            >
+                <div className="modal-form">
+                    <div className="form-group">
+                        <label>Hora de entrada</label>
+                        <input
+                            type="datetime-local"
+                            value={fechaParaInput(selectedSession?.checkIn)}
+                            onChange={(e) => setSelectedSession({ ...selectedSession, checkIn: e.target.value })}
+                        />
+                    </div>
+
+                    <div className="form-group">
+                        <label>Hora de salida</label>
+                        <input
+                            type="datetime-local"
+                            value={fechaParaInput(selectedSession?.checkOut)}
+                            onChange={(e) => setSelectedSession({ ...selectedSession, checkOut: e.target.value })}
+                        />
+                    </div>
+
+                    <div className="form-group">
+                        <label>Categoría</label>
+                        <select
+                            value={selectedSession?.category?._id || selectedSession?.category || ""}
+                            onChange={(e) => setSelectedSession({ ...selectedSession, category: e.target.value })}
+                        >
+                            <option value="">Seleccionar categoría</option>
+                            {categories.map((category) => (
+                                <option key={category._id} value={category._id}>
+                                    {category.name}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <div className="form-group">
+                        <label>Descripción</label>
+                        <textarea
+                            rows="3"
+                            value={selectedSession?.description || ""}
+                            onChange={(e) => setSelectedSession({ ...selectedSession, description: e.target.value })}
+                            placeholder="Añade una descripción..."
+                        />
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '12px', marginTop: '12px', justifyContent: 'flex-end' }}>
+                        <button
+                            className="btn-cancel"
+                            style={{ background: '#F2F2F7', border: 'none', padding: '10px 20px', borderRadius: '10px', fontWeight: 600, cursor: 'pointer' }}
+                            onClick={() => setMostrarModal(false)}
+                        >
+                            Cancelar
+                        </button>
+                        <button
+                            className="btn-delete"
+                            style={{ background: 'var(--accent-green)', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '10px', fontWeight: 600, cursor: 'pointer' }}
+                            onClick={() => {
+                                handleEdit(selectedSession.checkIn, selectedSession.checkOut, selectedSession.category?._id || selectedSession.category, selectedSession.description);
+                            }}
+                        >
+                            Guardar cambios
                         </button>
                     </div>
                 </div>
