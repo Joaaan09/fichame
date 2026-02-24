@@ -1,75 +1,35 @@
-import React, { useState, useRef, useEffect } from 'react'
+import React, { useRef, useEffect, useState } from 'react'
 import { useOutletContext } from 'react-router-dom'
+import { formatDate } from '../../helpers/FormatDate';
+import { useHome } from '../../hooks/useHome';
 
 export const Home = () => {
 
-    // Estados
-    const [isWorking, setIsWorking] = useState(false);
-    const [startTime, setStartTime] = useState(0);
     const [timer, setTimer] = useState("00:00:00");
     const intervalRef = useRef(null);
     const { selectedCategory } = useOutletContext();
-    const [workSessionId, setWorkSessionId] = useState(null);
-    const [todayHours, setTodayHours] = useState(0);
 
-    // Limpiar intervalo al desmontar componente
+    const {
+        todayHours, lastSession,
+        isWorking, setIsWorking,
+        workSessionId, setWorkSessionId,
+        startTime, setStartTime,
+        refetch
+    } = useHome();
+
+    // Limpiar intervalo al desmontar
     useEffect(() => {
-        return () => {
-            if (intervalRef.current) clearInterval(intervalRef.current);
-        };
+        return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
     }, []);
 
-    useEffect(() => {
-        const fetchTotalHours = async () => {
-            const res = await fetch("/api/work-session/list", {
-                headers: { "Authorization": localStorage.getItem("token") }
-            });
-            const data = await res.json();
-            const today = new Date().toISOString().split("T")[0];
-            const todaySessions = data.workSessions.filter(ws => {
-                return new Date(ws.checkIn).toISOString().split("T")[0] === today;
-            });
-            let total = 0;
-            todaySessions.forEach(ws => {
-                if (ws.checkOut) {
-                    total += new Date(ws.checkOut).getTime() - new Date(ws.checkIn).getTime();
-                }
-            });
-            const h = Math.floor(total / (1000 * 60 * 60));
-            const m = Math.floor((total % (1000 * 60 * 60)) / (1000 * 60));
-            setTodayHours(`${h}h ${m}m`);
-        };
-        fetchTotalHours();
-    }, [isWorking]);
-
-    // Detectar si hay una jornada activa
-    useEffect(() => {
-        const checkActiveSession = async () => {
-            const token = localStorage.getItem("token");
-            const res = await fetch("/api/work-session/active", {
-                headers: { "Authorization": token }
-            });
-            const data = await res.json();
-            if (data.status === "success" && data.workSession) {
-                setIsWorking(true);
-                setStartTime(new Date(data.workSession.checkIn).getTime());
-                setWorkSessionId(data.workSession._id);
-            }
-        };
-        checkActiveSession();
-    }, []);
-
-    // Actualizar timer cada segundo cuando está trabajando
+    // Timer
     useEffect(() => {
         if (isWorking) {
             intervalRef.current = setInterval(() => {
-                const now = Date.now();
-                const diff = now - startTime;
-
-                const h = Math.floor(diff / (1000 * 60 * 60));
-                const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-                const s = Math.floor((diff % (1000 * 60)) / 1000);
-
+                const diff = Date.now() - startTime;
+                const h = Math.floor(diff / 3600000);
+                const m = Math.floor((diff % 3600000) / 60000);
+                const s = Math.floor((diff % 60000) / 1000);
                 setTimer(
                     `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`
                 );
@@ -77,60 +37,52 @@ export const Home = () => {
         } else {
             if (intervalRef.current) clearInterval(intervalRef.current);
         }
-
-        return () => {
-            if (intervalRef.current) clearInterval(intervalRef.current);
-        };
+        return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
     }, [isWorking, startTime]);
 
     // Lógica del botón
     const handleClick = async () => {
-        if (!isWorking) {
-            // START
-            setIsWorking(true);
-            setStartTime(Date.now());
+        const token = localStorage.getItem("token");
 
-            // Petición
+        if (!isWorking) {
+            const now = Date.now();
+            setIsWorking(true);
+            setStartTime(now);
+
             const request = await fetch("/api/work-session/start", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
-                    "Authorization": `${localStorage.getItem("token")}`
+                    "Authorization": token
                 },
                 body: JSON.stringify({
-                    checkIn: startTime,
+                    checkIn: now,
                     categoryId: selectedCategory._id
                 }),
             });
-
             const data = await request.json();
-
             if (data.status === "success") {
                 setWorkSessionId(data.workSession._id);
             }
 
         } else {
-            // STOP
             setIsWorking(false);
             setTimer("00:00:00");
 
-            // Petición
-            const request = await fetch("/api/work-session/end", {
+            await fetch("/api/work-session/end", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
-                    "Authorization": `${localStorage.getItem("token")}`
+                    "Authorization": token
                 },
                 body: JSON.stringify({
-                    checkOut: startTime,
+                    checkOut: Date.now(),
                     workSessionId: workSessionId
                 }),
             });
-
+            refetch();
         }
     };
-
-
 
     return (
         <>
@@ -150,7 +102,7 @@ export const Home = () => {
                 </div>
                 <div className="stat-item">
                     <div className="stat-label">Última sesión</div>
-                    <div className="stat-value">09:30 - 13:42</div>
+                    <div className="stat-value">{formatDate(lastSession)}</div>
                 </div>
             </div>
         </>

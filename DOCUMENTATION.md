@@ -10,38 +10,75 @@ Fichame es una aplicación de control de jornadas laborales. Permite a los usuar
 
 ```
 fichame/
-├── docker-compose.yaml          # Orquestador de servicios
+├── docker-compose.yaml
+├── DOCUMENTATION.md
 ├── backend/
-│   ├── Dockerfile               # Imagen Docker del backend
-│   ├── .env                     # Variables de entorno (no se sube a git)
-│   ├── .dockerignore            # Archivos excluidos del build
-│   ├── package.json             # Dependencias del proyecto
-│   ├── index.js                 # Punto de entrada del servidor
+│   ├── Dockerfile
+│   ├── .env
+│   ├── .dockerignore
+│   ├── package.json
+│   ├── index.js                     # Entry point del servidor
 │   ├── database/
-│   │   └── connection.js        # Conexión a MongoDB
-│   ├── models/                  # Esquemas de Mongoose
+│   │   └── connection.js            # Conexión a MongoDB
+│   ├── models/
 │   │   ├── User.js
 │   │   ├── Category.js
 │   │   └── WorkSession.js
-│   ├── controllers/             # Lógica de negocio
+│   ├── controllers/
 │   │   ├── UserController.js
 │   │   ├── CategoryController.js
 │   │   └── WorkSessionController.js
-│   ├── routes/                  # Definición de endpoints
+│   ├── routes/
 │   │   ├── user.js
-│   │   └── category.js
-│   ├── middlewares/             # Interceptores de peticiones
+│   │   ├── category.js
+│   │   └── workSession.js
+│   ├── middlewares/
 │   │   └── auth.js
-│   ├── helpers/                 # Funciones auxiliares simples
+│   ├── helpers/
 │   │   └── validate.js
-│   └── services/                # Lógica compleja con librerías externas
+│   └── services/
 │       └── jwt.js
-└── frontend/                    # (por desarrollar)
+└── frontend/
+    ├── Dockerfile
+    ├── vite.config.js               # Proxy /api → backend:3000
+    ├── package.json
+    ├── index.html
+    └── src/
+        ├── main.jsx                 # Entry point
+        ├── App.jsx                  # Layout principal + Routing
+        ├── assets/
+        │   └── css/
+        │       ├── index.css        # Estilos globales + variables CSS
+        │       └── responsive.css   # Media queries
+        ├── components/
+        │   ├── layout/
+        │   │   ├── public/
+        │   │   │   ├── PublicLayout.jsx   # Layout sin auth (login, registro)
+        │   │   │   └── Header.jsx         # Header público (logo)
+        │   │   └── private/
+        │   │       ├── PrivateLayout.jsx   # Layout con auth (dashboard)
+        │   │       └── Header.jsx          # Header privado (nav, categorías)
+        │   ├── pages/
+        │   │   └── Home.jsx               # Dashboard principal (timer, fichaje)
+        │   └── user/
+        │       ├── Login.jsx              # Formulario de login
+        │       └── Register.jsx           # Formulario de registro
+        ├── context/
+        │   └── AuthProvider.jsx     # Contexto global de autenticación
+        ├── hooks/
+        │   ├── useAuth.jsx          # Hook para acceder al contexto auth
+        │   └── useForm.jsx          # Hook para formularios
+        ├── helpers/
+        │   └── Global.js            # Constantes globales (API URL)
+        └── router/
+            └── Routing.jsx          # Definición de rutas (react-router-dom)
 ```
 
 ---
 
 ## 🔧 Stack Tecnológico
+
+### Backend
 
 | Tecnología | Uso |
 |---|---|
@@ -55,7 +92,14 @@ fichame/
 | **validator** | Validación de inputs |
 | **dotenv** | Variables de entorno |
 | **cors** | Control de acceso cruzado |
-| **Docker** | Contenerización |
+
+### Frontend
+
+| Tecnología | Uso |
+|---|---|
+| **React 19** | Librería UI |
+| **Vite** | Bundler + dev server con HMR |
+| **react-router-dom** | Enrutamiento SPA |
 
 ---
 
@@ -66,7 +110,7 @@ fichame/
 | Servicio | Imagen | Puerto | Descripción |
 |---|---|---|---|
 | `server` | `fichame-server` (build local) | 3000 | Backend API |
-| `client` | `fichame-frontend` (build local) | - | Frontend (pendiente) |
+| `client` | `fichame-frontend` (build local) | 5173 (dev) | Frontend React |
 | `mongodb` | `mongo:latest` | - | Base de datos |
 
 ### Comandos útiles
@@ -81,8 +125,11 @@ docker logs fichame-backend --tail 20
 # Parar todos los servicios
 docker compose down
 
-# Entrar al contenedor del backend
-docker exec -it fichame-backend sh
+# Frontend en desarrollo (sin Docker, con hot reload)
+cd frontend && npm run dev
+
+# Backend en desarrollo (sin Docker)
+cd backend && npx nodemon index.js
 ```
 
 ### Red
@@ -122,16 +169,16 @@ Todos los servicios usan la red externa `reverse_proxy_network` para integrarse 
 | `name` | String | Nombre de la categoría |
 | `color` | String | Color asociado |
 
-### WorkSession (🚧 en desarrollo)
+### WorkSession
 
 | Campo | Tipo | Descripción |
 |---|---|---|
 | `_id` | ObjectId | ID auto-generado |
-| `userId` | ObjectId | Usuario propietario |
-| `categoryId` | ObjectId | Categoría asignada |
+| `user` | ObjectId (ref: User) | Usuario propietario |
+| `categoryId` | ObjectId (ref: Category) | Categoría asignada |
 | `description` | String | Descripción de la sesión |
 | `checkIn` | Date | Hora de entrada |
-| `checkOut` | Date | Hora de salida |
+| `checkOut` | Date | Hora de salida (null si jornada activa) |
 
 ---
 
@@ -142,7 +189,7 @@ Todos los servicios usan la red externa `reverse_proxy_network` para integrarse 
 ```
 1. POST /api/user/login → { email, password }
 2. Backend valida credenciales → genera token JWT (30 días)
-3. Frontend guarda el token
+3. Frontend guarda el token en localStorage
 4. Peticiones protegidas → Header: Authorization: <token>
 5. Middleware auth.js decodifica → inyecta req.user con datos del usuario
 ```
@@ -158,6 +205,8 @@ Todos los servicios usan la red externa `reverse_proxy_network` para integrarse 
     "exp": 1742505600
 }
 ```
+
+> ⚠️ **Importante**: `req.user` usa `id` (sin guion bajo). Los modelos Mongoose usan `_id`.
 
 ---
 
@@ -187,11 +236,7 @@ Todos los servicios usan la red externa `reverse_proxy_network` para integrarse 
 {
     "status": "success",
     "message": "Usuario registrado correctamente",
-    "user": {
-        "id": "...",
-        "name": "Joan",
-        "email": "joan@test.com"
-    }
+    "user": { "id": "...", "name": "Joan", "email": "joan@test.com" }
 }
 ```
 
@@ -211,11 +256,7 @@ Todos los servicios usan la red externa `reverse_proxy_network` para integrarse 
     "status": "success",
     "message": "Usuario logueado correctamente",
     "token": "eyJhbGciOi...",
-    "user": {
-        "id": "...",
-        "name": "Joan",
-        "email": "joan@test.com"
-    }
+    "user": { "id": "...", "name": "Joan", "email": "joan@test.com" }
 }
 ```
 
@@ -255,19 +296,6 @@ Todos los servicios usan la red externa `reverse_proxy_network` para integrarse 
 }
 ```
 
-**Respuesta exitosa:**
-```json
-{
-    "status": "success",
-    "message": "Categoria creada correctamente",
-    "category": {
-        "id": "...",
-        "name": "Trabajo",
-        "color": "#FF5733"
-    }
-}
-```
-
 #### GET /api/category/list
 
 **Headers:** `Authorization: <token>`
@@ -282,15 +310,136 @@ Todos los servicios usan la red externa `reverse_proxy_network` para integrarse 
 
 ---
 
-### ⏱️ Jornadas (`/api/worksession`) — 🚧 En desarrollo
+### ⏱️ Jornadas (`/api/work-session`)
+
+> Todas las rutas requieren autenticación
 
 | Método | Ruta | Descripción |
 |---|---|---|
-| `POST` | `/start` | Empezar jornada (check-in) |
-| `PUT` | `/end/:id` | Acabar jornada (check-out) |
+| `POST` | `/start` | Empezar jornada (check-in automático) |
+| `POST` | `/end` | Acabar jornada (check-out automático) |
 | `POST` | `/create` | Crear jornada manual |
-| `GET` | `/list` | Listar jornadas |
+| `PUT` | `/update/:id` | Editar jornada existente |
+| `GET` | `/list` | Listar jornadas del usuario |
+| `GET` | `/active` | Obtener jornada activa (sin checkOut) |
 | `DELETE` | `/remove/:id` | Eliminar jornada |
+
+#### POST /api/work-session/start
+
+**Headers:** `Authorization: <token>`
+
+**Body:**
+```json
+{
+    "checkIn": 1739913600000,
+    "categoryId": "category_id"
+}
+```
+
+**Respuesta exitosa:**
+```json
+{
+    "status": "success",
+    "message": "Jornada empezada correctamente",
+    "workSession": { "_id": "...", "user": "...", "categoryId": "...", "checkIn": "..." }
+}
+```
+
+#### POST /api/work-session/end
+
+**Headers:** `Authorization: <token>`
+
+**Body:**
+```json
+{
+    "workSessionId": "session_id"
+}
+```
+
+#### GET /api/work-session/active
+
+**Headers:** `Authorization: <token>`
+
+**Respuesta:** La jornada activa del usuario (sin `checkOut`) o `null`.
+
+#### POST /api/work-session/create
+
+**Headers:** `Authorization: <token>`
+
+**Body:**
+```json
+{
+    "categoryId": "category_id",
+    "description": "Reunión",
+    "checkIn": "2026-02-19T09:00:00",
+    "checkOut": "2026-02-19T17:00:00"
+}
+```
+
+#### GET /api/work-session/list
+
+**Headers:** `Authorization: <token>`
+
+**Respuesta:** Lista de jornadas del usuario ordenadas por checkIn (más reciente primero)
+
+---
+
+## 🖥️ Frontend (React + Vite)
+
+### Enrutamiento
+
+```
+/                 → PublicLayout → Login (si no auth)
+/login            → PublicLayout → Login
+/registro         → PublicLayout → Register
+/home             → PrivateLayout → Home (dashboard con timer)
+```
+
+### Flujo de autenticación
+
+```
+1. Usuario inicia sesión en Login.jsx
+2. Token se guarda en localStorage
+3. AuthProvider verifica token al cargar (GET /api/user/profile)
+4. PublicLayout: si auth → redirige a /home
+5. PrivateLayout: si no auth → redirige a /
+```
+
+### Componentes clave
+
+| Componente | Función |
+|---|---|
+| `AuthProvider` | Contexto global: verifica token, guarda datos del usuario |
+| `PublicLayout` | Layout para páginas sin auth (Login, Register) |
+| `PrivateLayout` | Layout para páginas con auth (Home). Carga categorías |
+| `Home` | Dashboard: timer, botón fichaje (start/end), stats del día |
+| `Header (private)` | Navegación + selector de categoría con dropdown |
+| `useForm` | Hook para gestionar formularios (onChange → state) |
+| `useAuth` | Hook para acceder al contexto de autenticación |
+
+### Proxy (Vite → Backend)
+
+En `vite.config.js`, las peticiones a `/api` se redirigen al backend:
+
+```js
+server: {
+    proxy: {
+        '/api': 'http://localhost:3000'
+    }
+}
+```
+
+### Variables CSS principales
+
+```css
+--bg-body: #F5F5F7         /* Fondo general */
+--bg-card: #FFFFFF         /* Fondo tarjetas */
+--text-primary: #1D1D1F    /* Texto principal */
+--text-secondary: #86868B  /* Texto secundario */
+--accent-blue: #0071E3     /* Azul Apple */
+--accent-green: #34C759    /* Botón start */
+--accent-red: #FF3B30      /* Botón stop / errores */
+```
 
 ---
 
@@ -309,9 +458,9 @@ Todos los servicios usan la red externa `reverse_proxy_network` para integrarse 
 ### Flujo de una petición
 
 ```
-Cliente → Ruta → [Middleware auth] → Controller → Modelo → MongoDB
-                                         ↓
-                                    Respuesta JSON
+Frontend (fetch) → Vite Proxy → Express Router → [auth middleware] → Controller → Mongoose → MongoDB
+                                                                          ↓
+                                                                    Respuesta JSON
 ```
 
 ### Reglas importantes
@@ -320,18 +469,21 @@ Cliente → Ruta → [Middleware auth] → Controller → Modelo → MongoDB
 2. **Nunca catch vacío** — siempre devolver respuesta de error con `res.status(500).json(...)`
 3. **Comparar ObjectId con string** usando `.toString()` → `category.user.toString() !== req.user.id`
 4. **Password nunca en respuestas** — devolver solo `id`, `name`, `email`
-5. **Rebuild tras cambios** → `docker compose up -d --build server`
+5. **JWT payload usa `id`** — no `_id`. Los modelos Mongoose usan `_id`
+6. **React: no tocar el DOM** — usar `useState`, `useRef`, `useEffect` en vez de `document.getElementById`
+7. **SVG en React** — usar camelCase: `strokeLinecap`, `strokeLinejoin`
+8. **Rebuild backend tras cambios** → `docker compose up -d --build server`
+9. **Frontend en dev** → `cd frontend && npm run dev` (hot reload automático)
 
 ---
 
 ## 📝 Pendiente por Implementar
 
-- [ ] **WorkSession**: Completar controller (start, end, create, list, remove)
-- [ ] **WorkSession**: Crear rutas
-- [ ] **WorkSession**: Arreglar modelo (usar `Schema.ObjectId` con `ref` en vez de `ObjectId`)
 - [ ] **Category**: Función editar categoría
 - [ ] **User**: Ruta de perfil (`/profile/:id`)
-- [ ] **Frontend**: Desarrollo completo
+- [ ] **Frontend**: Página de historial de jornadas
+- [ ] **Frontend**: Página de perfil de usuario
+- [ ] **Frontend**: Navegación móvil (mobile nav)
 - [ ] **MongoDB**: Añadir autenticación para producción
 - [ ] **Seguridad**: Validar formato de email en login
 - [ ] **Register**: Migrar bcrypt de callback a async/await

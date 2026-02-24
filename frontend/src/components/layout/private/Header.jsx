@@ -1,5 +1,6 @@
 import React from 'react'
 import { useState } from 'react';
+import { NavLink } from 'react-router-dom';
 
 export const Header = ({ categories, selectedCategory, setSelectedCategory }) => {
 
@@ -11,9 +12,9 @@ export const Header = ({ categories, selectedCategory, setSelectedCategory }) =>
             <div className="brand">FichaMe</div>
 
             <nav className="desktop-nav">
-                <a href="#" className="nav-link active">Dashboard</a>
-                <a href="#" className="nav-link">Historial</a>
-                <a href="#" className="nav-link">Perfil</a>
+                <NavLink to="/home" end className={({ isActive }) => isActive ? "nav-link active" : "nav-link"}>Dashboard</NavLink>
+                <NavLink to="/home/historial" className={({ isActive }) => isActive ? "nav-link active" : "nav-link"}>Historial</NavLink>
+                <NavLink to="/home/profile" className={({ isActive }) => isActive ? "nav-link active" : "nav-link"}>Perfil</NavLink>
             </nav>
 
             <div className="category-selector" id="categorySelector" onClick={() => setShowDropdown(!showDropdown)}>
