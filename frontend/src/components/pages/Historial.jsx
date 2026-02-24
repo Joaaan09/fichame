@@ -9,7 +9,7 @@ export const Historial = () => {
     // Obtenemos las sesiones del hook
     const { sessions, loading, refetch } = useWorkSessions();
     const [activeDropdown, setActiveDropdown] = useState(null);
-    const [mostrarModal, setMostrarModal] = useState(false);
+    const [modoModal, setModoModal] = useState(null); // 'edit' | 'delete' | null
     const [selectedSession, setSelectedSession] = useState(null);
     const token = localStorage.getItem("token");
 
@@ -25,7 +25,7 @@ export const Historial = () => {
         });
 
         if (request.ok) {
-            setMostrarModal(false);
+            setModoModal(null);
             refetch();
         }
     };
@@ -46,7 +46,7 @@ export const Historial = () => {
         });
 
         if (request.ok) {
-            setMostrarModal(false);
+            setModoModal(null);
             refetch();
         }
     };
@@ -54,12 +54,12 @@ export const Historial = () => {
 
     const openDeleteModal = (session) => {
         setSelectedSession(session);
-        setMostrarModal(true);
+        setModoModal('delete');
     };
 
     const openEditModal = (session) => {
         setSelectedSession(session);
-        setMostrarModal(true);
+        setModoModal('edit');
     };
 
     const toggleDropdown = (id) => {
@@ -160,10 +160,9 @@ export const Historial = () => {
                     </div>
                 )
             })}
-            {/* Modal de eliminación (FUERA del bucle) */}
             <Modal
-                isOpen={mostrarModal}
-                onClose={() => setMostrarModal(false)}
+                isOpen={modoModal === 'delete'}
+                onClose={() => setModoModal(null)}
                 title="Eliminar sesión"
             >
                 <div className="modal-delete-confirm">
@@ -172,7 +171,7 @@ export const Historial = () => {
                         <button
                             className="btn-cancel"
                             style={{ background: '#F2F2F7', border: 'none', padding: '10px 20px', borderRadius: '10px', fontWeight: 600, cursor: 'pointer' }}
-                            onClick={() => setMostrarModal(false)}
+                            onClick={() => setModoModal(null)}
                         >
                             Cancelar
                         </button>
@@ -182,8 +181,7 @@ export const Historial = () => {
                             onClick={() => {
                                 console.log("Eliminando sesión:", selectedSession?._id);
                                 // Aquí irá el fetch futuro
-                                handleDelete(selectedSession._id);
-                                setMostrarModal(false);
+                                handleDelete();
                             }}
                         >
                             Eliminar
@@ -193,8 +191,8 @@ export const Historial = () => {
             </Modal>
 
             <Modal
-                isOpen={mostrarModal && !!selectedSession}
-                onClose={() => setMostrarModal(false)}
+                isOpen={modoModal === 'edit'}
+                onClose={() => setModoModal(null)}
                 title="Editar sesión"
             >
                 <div className="modal-form">
@@ -245,7 +243,7 @@ export const Historial = () => {
                         <button
                             className="btn-cancel"
                             style={{ background: '#F2F2F7', border: 'none', padding: '10px 20px', borderRadius: '10px', fontWeight: 600, cursor: 'pointer' }}
-                            onClick={() => setMostrarModal(false)}
+                            onClick={() => setModoModal(null)}
                         >
                             Cancelar
                         </button>
