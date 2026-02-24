@@ -11,6 +11,7 @@ export const Historial = () => {
     const [activeDropdown, setActiveDropdown] = useState(null);
     const [modoModal, setModoModal] = useState(null); // 'edit' | 'delete' | null
     const [selectedSession, setSelectedSession] = useState(null);
+    const [error, setError] = useState(null);
     const token = localStorage.getItem("token");
 
     const { categories } = useOutletContext();
@@ -26,7 +27,10 @@ export const Historial = () => {
 
         if (request.ok) {
             setModoModal(null);
+            setError(null);
             refetch();
+        } else {
+            setError("Error al eliminar la sesión");
         }
     };
 
@@ -47,17 +51,22 @@ export const Historial = () => {
 
         if (request.ok) {
             setModoModal(null);
+            setError(null);
             refetch();
+        } else {
+            setError("Error al actualizar la sesión");
         }
     };
 
 
     const openDeleteModal = (session) => {
+        setError(null);
         setSelectedSession(session);
         setModoModal('delete');
     };
 
     const openEditModal = (session) => {
+        setError(null);
         setSelectedSession(session);
         setModoModal('edit');
     };
@@ -162,16 +171,17 @@ export const Historial = () => {
             })}
             <Modal
                 isOpen={modoModal === 'delete'}
-                onClose={() => setModoModal(null)}
+                onClose={() => { setModoModal(null); setError(null); }}
                 title="Eliminar sesión"
             >
                 <div className="modal-delete-confirm">
+                    {error && <div className="error-msg">{error}</div>}
                     <p>¿Estás seguro de que deseas eliminar esta sesión?</p>
                     <div style={{ display: 'flex', gap: '12px', marginTop: '24px', justifyContent: 'flex-end' }}>
                         <button
                             className="btn-cancel"
                             style={{ background: '#F2F2F7', border: 'none', padding: '10px 20px', borderRadius: '10px', fontWeight: 600, cursor: 'pointer' }}
-                            onClick={() => setModoModal(null)}
+                            onClick={() => { setModoModal(null); setError(null); }}
                         >
                             Cancelar
                         </button>
@@ -192,10 +202,11 @@ export const Historial = () => {
 
             <Modal
                 isOpen={modoModal === 'edit'}
-                onClose={() => setModoModal(null)}
+                onClose={() => { setModoModal(null); setError(null); }}
                 title="Editar sesión"
             >
                 <div className="modal-form">
+                    {error && <div className="error-msg">{error}</div>}
                     <div className="form-group">
                         <label>Hora de entrada</label>
                         <input
@@ -239,11 +250,11 @@ export const Historial = () => {
                         />
                     </div>
 
-                    <div style={{ display: 'flex', gap: '12px', marginTop: '12px', justifyContent: 'flex-end' }}>
+                    <div style={{ display: 'flex', gap: '12px', marginTop: '24px', justifyContent: 'flex-end' }}>
                         <button
                             className="btn-cancel"
                             style={{ background: '#F2F2F7', border: 'none', padding: '10px 20px', borderRadius: '10px', fontWeight: 600, cursor: 'pointer' }}
-                            onClick={() => setModoModal(null)}
+                            onClick={() => { setModoModal(null); setError(null); }}
                         >
                             Cancelar
                         </button>
