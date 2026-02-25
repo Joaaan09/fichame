@@ -333,6 +333,9 @@ body {
 .row-text {
     font-size: 1rem;
     font-weight: 500;
+    border: none;
+    background: transparent;
+    cursor: pointer;
 }
 
 .row-right {
