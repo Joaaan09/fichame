@@ -34,3 +34,23 @@ export const groupSessionsByDate = (sessions) => {
         return acc;
     }, {});
 };
+
+
+
+export const calculateTotalHours = (sessions) => {
+    let totalMs = 0;
+    if (!sessions || sessions.length === 0) return "0h 0m";
+
+    sessions.forEach(session => {
+        if (session.checkIn && session.checkOut) {
+            totalMs += new Date(session.checkOut) - new Date(session.checkIn);
+        }
+    });
+
+    const totalMinutes = Math.floor(totalMs / (1000 * 60));
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+
+    return `${hours}h ${minutes}m`;
+};
+

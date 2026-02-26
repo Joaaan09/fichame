@@ -1,19 +1,92 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react';
 import { Modal } from '../common/Modal';
-import { useState } from 'react';
+import { useWorkSessions, calculateTotalHours } from '../../hooks/useWorkSessions';
+import { useTheme } from '../../context/ThemeContext';
 
 export const Profile = () => {
+
+    const [modoModal, setModoModal] = useState(null);
+    const userToEdit = JSON.parse(localStorage.getItem('user'));
+    const [user, setUser] = useState(userToEdit);
+    const [status, setStatus] = useState(null); // { type: 'success' | 'error', message: string }
+    const { sessions } = useWorkSessions();
+    const { darkMode, toggleTheme } = useTheme();
+
+    const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
+    const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
 
     const handleLogout = () => {
         localStorage.removeItem('token');
         window.location.href = '/';
     }
-    const [modoModal, setModoModal] = useState(null);
-    const user = JSON.parse(localStorage.getItem('user'));
+
+    const years = Array.from(
+        { length: 100 },
+        (_, i) => new Date().getFullYear() - i
+    ).map(year => ({
+        value: year,
+        label: String(year)
+    }));
+
+
+    const handleEdit = async (e) => {
+        e.preventDefault();
+
+        // Extraer datos del formulario
+        const formData = new FormData(e.target);
+        const updatedData = {
+            name: formData.get("name"),
+            email: formData.get("email")
+        };
+
+        // Si hay contraseña, la añadimos
+        const password = formData.get("password");
+        if (password) updatedData.password = password;
+
+        try {
+            const request = await fetch('/api/user/update', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': localStorage.getItem('token')
+                },
+                body: JSON.stringify(updatedData)
+            });
+
+            const response = await request.json();
+
+            if (response.status === "success") {
+                // Actualizar estado local
+                setUser(response.user);
+
+                // Actualizar localStorage para que persista al recargar
+                const currentUser = JSON.parse(localStorage.getItem("user"));
+                const newUser = { ...currentUser, ...response.user };
+                localStorage.setItem("user", JSON.stringify(newUser));
+
+                // Mostrar éxito y cerrar modal
+                setModoModal(null);
+                setStatus({ type: 'success', message: 'Perfil actualizado correctamente' });
+                setTimeout(() => setStatus(null), 3000);
+            } else {
+                setStatus({ type: 'error', message: response.message || 'Error al actualizar' });
+            }
+        } catch (error) {
+            console.error("Error al actualizar:", error);
+            setStatus({ type: 'error', message: 'Error de conexión con el servidor' });
+        }
+    }
+
 
 
     return (
         <section id="view-profile" className="page-content">
+
+            {status && (
+                <div className={`${status.type}-msg profile-status-msg`}>
+                    {status.message}
+                </div>
+            )}
 
             <div className="profile-header">
                 <div className="avatar-large">
@@ -41,22 +114,25 @@ export const Profile = () => {
                                 <circle cx="12" cy="7" r="4" />
                             </svg>
                         </div>
-                        <button className="row-text" onClick={() => setModoModal("edit")}>Editar datos personales</button>
+                        <span className="row-text" onClick={() => setModoModal("edit")}>Editar datos personales</span>
                         <Modal isOpen={modoModal === 'edit'}
-                            onClose={() => { setModoModal(null); setError(null); }}
+                            onClose={() => { setModoModal(null); setStatus(null); }}
                             title="Editar datos personales">
-                            <form>
+                            <form onSubmit={handleEdit}>
+                                {status?.type === 'error' && (
+                                    <div className="error-msg">{status.message}</div>
+                                )}
                                 <div className="input-group">
                                     <label className="input-label">Nombre</label>
-                                    <input type="text" className="input-field" value={user.name} />
+                                    <input type="text" name="name" className="input-field" defaultValue={user.name} />
                                 </div>
                                 <div className="input-group">
                                     <label className="input-label">Email</label>
-                                    <input type="email" className="input-field" value={user.email} />
+                                    <input type="email" name="email" className="input-field" defaultValue={user.email} />
                                 </div>
                                 <div className="input-group">
                                     <label className="input-label">Contraseña</label>
-                                    <input type="password" className="input-field" value={user.password} />
+                                    <input type="password" name="password" className="input-field" placeholder="Nueva contraseña (opcional)" />
                                 </div>
                                 <button type="submit" className="btn-primary">Guardar</button>
                             </form>
@@ -75,7 +151,7 @@ export const Profile = () => {
             </div>
 
             <div className="settings-group">
-                <a href="#" className="setting-row">
+                <a href="#" className="setting-row" onClick={() => setModoModal("horas")}>
                     <div className="row-left">
                         <div className="icon-box bg-green">
                             <svg width="18" height="18" viewBox="0 0 24 24"
@@ -87,7 +163,7 @@ export const Profile = () => {
                                 <line x1="3" y1="10" x2="21" y2="10" />
                             </svg>
                         </div>
-                        <span className="row-text">Horas trabajadas este mes</span>
+                        <span className="row-text">Historial de horas por meses</span>
                     </div>
                     <div className="row-right">
                         <svg width="20" height="20" viewBox="0 0 24 24"
@@ -99,8 +175,9 @@ export const Profile = () => {
                 </a>
             </div>
 
+
             <div className="settings-group">
-                <a href="#" className="setting-row">
+                <a href="#" className="setting-row" onClick={toggleTheme}>
                     <div className="row-left">
                         <div className="icon-box bg-gray">
                             <svg width="18" height="18" viewBox="0 0 24 24"
@@ -120,7 +197,7 @@ export const Profile = () => {
                         <span className="row-text">Apariencia</span>
                     </div>
                     <div className="row-right">
-                        <span className="value-text">Claro</span>
+                        <span className="value-text">{darkMode ? 'Oscuro' : 'Claro'}</span>
                         <svg width="20" height="20" viewBox="0 0 24 24"
                             fill="none" stroke="#C7C7CC" strokeWidth="2"
                             strokeLinecap="round" strokeLinejoin="round">
@@ -129,18 +206,59 @@ export const Profile = () => {
                     </div>
                 </a>
             </div>
+            <Modal isOpen={modoModal === 'horas'} onClose={() => setModoModal(null)} title="Horas por mes">
+                <div className="form-group">
+                    <div className="form-row">
+                        <select
+                            name="mes"
+                            value={selectedMonth}
+                            onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
+                        >
+                            <option value="1">Enero</option>
+                            <option value="2">Febrero</option>
+                            <option value="3">Marzo</option>
+                            <option value="4">Abril</option>
+                            <option value="5">Mayo</option>
+                            <option value="6">Junio</option>
+                            <option value="7">Julio</option>
+                            <option value="8">Agosto</option>
+                            <option value="9">Septiembre</option>
+                            <option value="10">Octubre</option>
+                            <option value="11">Noviembre</option>
+                            <option value="12">Diciembre</option>
+                        </select>
 
+                        <select
+                            name="year"
+                            value={selectedYear}
+                            onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+                        >
+                            {years.map(y => (
+                                <option key={y.value} value={y.value}>{y.label}</option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <div className="profile-summary-card">
+                        <p className="profile-summary-label">
+                            Total acumulado
+                        </p>
+                        <h2 className="profile-summary-value">
+                            {calculateTotalHours(sessions.filter(s => {
+                                const date = new Date(s.checkIn);
+                                return (date.getMonth() + 1) === selectedMonth && date.getFullYear() === selectedYear;
+                            }))}
+                        </h2>
+                    </div>
+                </div>
+            </Modal>
             <button className="logout-btn" onClick={handleLogout}>Cerrar Sesión</button>
 
-            <p style={{
-                textAlign: "center",
-                marginTop: "20px",
-                color: "var(--text-secondary)",
-                fontSize: "0.8rem"
-            }}>
+            <p className="profile-version">
                 Versión 1.0.0
             </p>
 
         </section>
     )
+
 }

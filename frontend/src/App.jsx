@@ -1,12 +1,13 @@
-import { useState } from 'react'
 import { Routing } from './router/Routing'
-
+import { ThemeProvider } from './context/ThemeContext';
 
 function App() {
   return (
-    <div className='layout'>
-      <Routing></Routing>
-    </div>
+    <ThemeProvider>
+      <div className='layout'>
+        <Routing></Routing>
+      </div>
+    </ThemeProvider>
   )
 }
 
