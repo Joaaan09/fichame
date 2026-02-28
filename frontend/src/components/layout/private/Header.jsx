@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { Modal } from '../../common/Modal';
 
-export const Header = ({ categories, selectedCategory, setSelectedCategory, setCategories }) => {
+export const Header = ({ categories, selectedCategory, setSelectedCategory, refetchCategories }) => {
 
     // Obtener categoría
     const [showDropdown, setShowDropdown] = useState(false);
@@ -38,8 +38,8 @@ export const Header = ({ categories, selectedCategory, setSelectedCategory, setC
 
         if (request.ok) {
             const data = await request.json();
-            setCategories([...categories, data.category]);
-            setSelectedCategory(data.category);
+            await refetchCategories(); // Refrescar toda la lista desde el servidor
+            setSelectedCategory(data.category); // Activar la recién creada
             setShowDropdown(false);
             setModoModal(null);
         }

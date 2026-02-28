@@ -116,7 +116,7 @@ export const Historial = () => {
     // Helper para obtener el nombre de la categoría
     const getCategoryName = (categoryData) => {
         // 1. Si no hay datos, es una entrada normal (sin categoría)
-        if (!categoryData) return "Entrada";
+        if (!categoryData) return "Categoría eliminada";
 
         // 2. Si ya es un objeto con el nombre (ya está poblado)
         if (typeof categoryData === 'object' && categoryData !== null && categoryData.name) {
@@ -131,7 +131,7 @@ export const Historial = () => {
             targetId = categoryData.toString();
         }
 
-        if (!targetId) return "Entrada";
+        if (!targetId) return "Categoría eliminada";
 
         // 4. Buscar en la lista global de categorías
         if (!categories || !Array.isArray(categories)) return "Cargando...";
@@ -141,7 +141,7 @@ export const Historial = () => {
             (c.id?.toString() === targetId)
         );
 
-        return found ? found.name : "Entrada";
+        return found ? found.name : "Categoría eliminada";
     };
 
     // Helper para formatear la duración de una sesión individual

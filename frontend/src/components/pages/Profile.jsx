@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Modal } from '../common/Modal';
 import { useWorkSessions, calculateTotalHours } from '../../hooks/useWorkSessions';
 import { useTheme } from '../../context/ThemeContext';
+import { useOutletContext } from 'react-router-dom';
+
 
 export const Profile = () => {
 
@@ -9,8 +11,11 @@ export const Profile = () => {
     const userToEdit = JSON.parse(localStorage.getItem('user'));
     const [user, setUser] = useState(userToEdit);
     const [status, setStatus] = useState(null); // { type: 'success' | 'error', message: string }
+    const [modalError, setModalError] = useState(null); // Error específico para modales de perfil
     const { sessions } = useWorkSessions();
     const { darkMode, toggleTheme } = useTheme();
+    const { categories = [], refetchCategories } = useOutletContext() || {};
+
 
     const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
     const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
@@ -74,6 +79,24 @@ export const Profile = () => {
         } catch (error) {
             console.error("Error al actualizar:", error);
             setStatus({ type: 'error', message: 'Error de conexión con el servidor' });
+        }
+    }
+
+    const deleteCategory = async (id) => {
+        const request = await fetch("/api/category/remove/" + id, {
+            method: "DELETE",
+            headers: {
+                "Authorization": localStorage.getItem("token")
+            }
+        });
+
+        const data = await request.json();
+
+        if (data.status === "success") {
+            setModalError({ type: 'success', message: 'Categoría eliminada correctamente' });
+            await refetchCategories(); // Refrescar del servidor
+        } else {
+            setModalError({ type: 'error', message: data.message || 'Error al eliminar' });
         }
     }
 
@@ -148,6 +171,50 @@ export const Profile = () => {
                 </a>
 
 
+            </div>
+
+            <div className="settings-group">
+                <a href="#" className="setting-row" onClick={() => setModoModal("categorias")}>
+                    <div className="row-left">
+                        <div className="icon-box bg-red">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="3" y="3" width="7" height="7"></rect>
+                                <rect x="14" y="3" width="7" height="7"></rect>
+                                <rect x="14" y="14" width="7" height="7"></rect>
+                                <rect x="3" y="14" width="7" height="7"></rect>
+                            </svg>
+                        </div>
+                        <span className="row-text" onClick={() => setModoModal("categorias")}>Gestionar categorias</span>
+                    </div>
+                    <div className="row-right">
+                        <svg width="20" height="20" viewBox="0 0 24 24"
+                            fill="none" stroke="#C7C7CC" strokeWidth="2"
+                            strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="9 18 15 12 9 6" />
+                        </svg>
+                    </div>
+                </a>
+
+                <Modal isOpen={modoModal === 'categorias'}
+                    onClose={() => { setModoModal(null); setModalError(null); setStatus(null); }}
+                    title="Gestionar categorias">
+                    {modalError && (
+                        <div className={`status-message ${modalError.type}`}>
+                            {modalError.message}
+                        </div>
+                    )}
+                    {categories.map((category) => (
+                        <div key={category._id || category.id} className="category-item">
+                            <div className="category-color" style={{ backgroundColor: category.color }}></div>
+                            <div className="category-name">{category.name}</div>
+                            <svg onClick={() => deleteCategory(category._id || category.id)} width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M3 6h18"></path>
+                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path>
+                                <path d="M10 11v6M14 11v6"></path>
+                            </svg>
+                        </div>
+                    ))}
+                </Modal>
             </div>
 
             <div className="settings-group">
@@ -258,7 +325,7 @@ export const Profile = () => {
                 Versión 1.0.0
             </p>
 
-        </section>
+        </section >
     )
 
 }
