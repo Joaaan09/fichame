@@ -1,31 +1,63 @@
-   /* --- RESPONSIVE ADJUSTMENTS --- */
-   @media (max-width: 768px) {
-       .desktop-nav {
-           display: none;
-       }
+/* --- RESPONSIVE ADJUSTMENTS --- */
+@media (max-width: 768px) {
+    /* Header responsive */
+    .header {
+        padding: 16px;
+        flex-wrap: wrap;
+        gap: 12px;
+    }
 
-       .mobile-nav {
-           display: block;
-       }
+    .brand {
+        font-size: 1rem;
+        flex: 1;
+        order: 1;
+    }
 
-       .timer-display {
-           font-size: 4.5rem;
-       }
+    .desktop-nav {
+        display: none;
+    }
 
-       .action-button {
-           width: 180px;
-           /* Botón más grande en móvil para facilitar toque */
-           height: 180px;
-           font-size: 1.25rem;
-       }
+    .mobile-menu-btn {
+        display: block;
+        order: 2;
+    }
 
-       .header {
-           padding: 20px;
-       }
+    .category-selector {
+        font-size: 0.85rem;
+        gap: 4px;
+        order: 4;
+    }
 
-       .bottom-stats {
-           bottom: 120px;
-       }
+    .category-dropdown {
+        min-width: 140px;
+    }
 
-       /* Subir para dejar sitio al menú móvil */
-   }
+    /* Mobile navigation */
+    .mobile-nav {
+        display: flex !important;
+    }
+
+    /* Timer and buttons */
+    .timer-display {
+        font-size: 4.5rem;
+    }
+
+    .action-button {
+        width: 180px;
+        height: 180px;
+        font-size: 1.25rem;
+    }
+
+    .bottom-stats {
+        bottom: 120px;
+    }
+
+    /* Auth forms */
+    .auth-card {
+        padding: 32px 24px;
+    }
+
+    .form-wrapper {
+        padding: 0 16px;
+    }
+}

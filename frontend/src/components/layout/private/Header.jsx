@@ -7,6 +7,7 @@ export const Header = ({ categories, selectedCategory, setSelectedCategory, refe
 
     // Obtener categoría
     const [showDropdown, setShowDropdown] = useState(false);
+    const [showMobileMenu, setShowMobileMenu] = useState(false);
     const [error, setError] = useState(null);
     const user = JSON.parse(localStorage.getItem("user"));
 
@@ -49,37 +50,52 @@ export const Header = ({ categories, selectedCategory, setSelectedCategory, refe
     }
 
     return (
-        <header className="header">
-            <div className="brand">FichaMe</div>
+        <>
+            <header className="header">
+                <div className="brand">FichaMe</div>
 
-            <nav className="desktop-nav">
-                <NavLink to="/home" end className={({ isActive }) => isActive ? "nav-link active" : "nav-link"}>Dashboard</NavLink>
-                <NavLink to="/home/historial" className={({ isActive }) => isActive ? "nav-link active" : "nav-link"}>Historial</NavLink>
-                <NavLink to="/home/profile" className={({ isActive }) => isActive ? "nav-link active" : "nav-link"}>Perfil</NavLink>
-            </nav>
+                <nav className="desktop-nav">
+                    <NavLink to="/home" end className={({ isActive }) => isActive ? "nav-link active" : "nav-link"}>Dashboard</NavLink>
+                    <NavLink to="/home/historial" className={({ isActive }) => isActive ? "nav-link active" : "nav-link"}>Historial</NavLink>
+                    <NavLink to="/home/profile" className={({ isActive }) => isActive ? "nav-link active" : "nav-link"}>Perfil</NavLink>
+                </nav>
 
-            <div className="category-selector" id="categorySelector" onClick={() => setShowDropdown(!showDropdown)}>
-                <span>{selectedCategory?.name || 'Categoría'}</span>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
-                {showDropdown && (
-                    <div className="category-dropdown">
-                        {categories.map(cat => (
-                            <div key={cat._id} onClick={(e) => {
-                                e.stopPropagation();
-                                setSelectedCategory(cat);
-                                setShowDropdown(false);
-                            }}>
-                                {cat.name}
+                <button className="mobile-menu-btn" onClick={() => setShowMobileMenu(!showMobileMenu)}>
+                    ☰
+                </button>
+
+                <div className="category-selector" id="categorySelector" onClick={() => setShowDropdown(!showDropdown)}>
+                    <span>{selectedCategory?.name || 'Categoría'}</span>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    {showDropdown && (
+                        <div className="category-dropdown">
+                            {categories.map(cat => (
+                                <div key={cat._id} onClick={(e) => {
+                                    e.stopPropagation();
+                                    setSelectedCategory(cat);
+                                    setShowDropdown(false);
+                                }}>
+                                    {cat.name}
+                                </div>
+                            ))}
+                            <div className="category-dropdown-item" onClick={openCreateModal}>
+                                + Nueva categoría
                             </div>
-                        ))}
-                        <div className="category-dropdown-item" onClick={openCreateModal}>
-                            + Nueva categoría
                         </div>
-                    </div>
 
-                )}
+                    )}
 
-            </div>
+                </div>
+            </header>
+
+            {showMobileMenu && (
+                <nav className="mobile-nav">
+                    <NavLink to="/home" end className={({ isActive }) => isActive ? "mobile-nav-link active" : "mobile-nav-link"} onClick={() => setShowMobileMenu(false)}>Dashboard</NavLink>
+                    <NavLink to="/home/historial" className={({ isActive }) => isActive ? "mobile-nav-link active" : "mobile-nav-link"} onClick={() => setShowMobileMenu(false)}>Historial</NavLink>
+                    <NavLink to="/home/profile" className={({ isActive }) => isActive ? "mobile-nav-link active" : "mobile-nav-link"} onClick={() => setShowMobileMenu(false)}>Perfil</NavLink>
+                </nav>
+            )}
+
             <Modal
                 isOpen={modoModal === 'create'}
                 onClose={() => { setModoModal(null); setError(null); }}
@@ -98,6 +114,6 @@ export const Header = ({ categories, selectedCategory, setSelectedCategory, refe
                     <button type="submit" className="btn-primary">Crear</button>
                 </form>
             </Modal>
-        </header>
+        </>
     )
 }
