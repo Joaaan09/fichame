@@ -52,6 +52,9 @@ export const Login = () => {
 
     return (
         <div id="loginForm" className="form-wrapper fade-in">
+            <div className="form-header">
+                <h2>Iniciar sesión</h2>
+            </div>
             {login && (
                 <strong
                     className={`alert ${login === "login"
@@ -72,13 +75,13 @@ export const Login = () => {
                 <div className="input-group">
                     <label className="input-label">Correo electrónico</label>
                     <input type="email" name="email" className="input-field" placeholder="nombre@ejemplo.com" id="loginEmail" required onChange={changed} />
-                    <div className="error-msg">Por favor introduce un email válido.</div>
+                    <div className="field-error">Por favor introduce un email válido.</div>
                 </div>
 
                 <div className="input-group">
                     <label className="input-label">Contraseña</label>
                     <input type="password" name="password" className="input-field" placeholder="••••••••" id="loginPass" onChange={changed} required />
-                    <div className="error-msg">La contraseña es incorrecta.</div>
+                    <div className="field-error">La contraseña es incorrecta.</div>
                 </div>
 
                 <button type="submit" className="btn-primary">Iniciar sesión</button>

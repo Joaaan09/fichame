@@ -156,17 +156,16 @@ body {
     background-color: rgba(255, 59, 48, 0.03);
 }
 
-.error-msg {
+.field-error {
     font-size: 0.75rem;
     color: var(--error-red);
     margin-top: 6px;
     height: 0px;
     overflow: hidden;
     transition: height 0.3s ease;
-
 }
 
-.input-field.error+.error-msg {
+.input-field.error+.field-error {
     height: 18px;
 }
 
