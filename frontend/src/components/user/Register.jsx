@@ -14,6 +14,7 @@ export const Register = () => {
         e.preventDefault();
 
         const userToRegister = form;
+        console.log("Registering user:", userToRegister);
 
         const request = await fetch(Global.url + "user/register", {
             method: "POST",
@@ -24,6 +25,7 @@ export const Register = () => {
         });
 
         const data = await request.json();
+        console.log("Register response:", data);
 
         if (data.status === "success") {
             setLogin("sended");
