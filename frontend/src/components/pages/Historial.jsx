@@ -9,7 +9,7 @@ export const Historial = () => {
     // Obtenemos las sesiones del hook
     const { sessions, loading, refetch } = useWorkSessions();
     const [activeDropdown, setActiveDropdown] = useState(null);
-    const [modoModal, setModoModal] = useState(null); // 'edit' | 'delete' | null
+    const [modoModal, setModoModal] = useState(null); // 'edit' | 'delete' | 'create' | null
     const [selectedSession, setSelectedSession] = useState(null);
     const [error, setError] = useState(null);
     const token = localStorage.getItem("token");
@@ -62,6 +62,36 @@ export const Historial = () => {
         }
     };
 
+    const handleCreate = async (e) => {
+        e.preventDefault();
+
+        // Extraer los datos del formulario
+        const dataFrom = new FormData(e.target);
+        const { checkIn, checkOut, categoryId, description } = Object.fromEntries(dataFrom.entries());
+
+        const request = await fetch("/api/work-session/create", {
+            method: "POST",
+            body: JSON.stringify({
+                checkIn: checkIn ? new Date(checkIn).toISOString() : null,
+                checkOut: checkOut ? new Date(checkOut).toISOString() : null,
+                categoryId: categoryId,
+                description
+            }),
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": token
+            }
+        });
+
+        if (request.ok) {
+            setModoModal(null);
+            setError(null);
+            refetch();
+        } else {
+            setError("Error al crear la sesión");
+        }
+    }
+
 
     const openDeleteModal = (session) => {
         setError(null);
@@ -110,10 +140,40 @@ export const Historial = () => {
         <section className="page-content">
             <header className="history-header">
                 <h2>Historial</h2>
-                <button className="btn-add-session" onClick={() => {/* Aquí irá la lógica de crear manual */ }}>
+                <button className="btn-add-session" onClick={() => { setModoModal('create') }}>
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14" /><path d="M12 5v14" /></svg>
                     Nueva jornada
                 </button>
+                <Modal isOpen={modoModal === 'create'}
+                    onClose={() => { setModoModal(null); setError(null); }}
+                    title="Nueva jornada" >
+                    <form onSubmit={handleCreate}>
+                        <div className="input-group">
+                            <label className="input-label">Check-in</label>
+                            <input type="datetime-local" name="checkIn" className="input-field" required />
+                        </div>
+                        <div className="input-group">
+                            <label className="input-label">Check-out</label>
+                            <input type="datetime-local" name="checkOut" className="input-field" required />
+                        </div>
+                        <div className="input-group">
+                            <label className="input-label">Categoría</label>
+                            <select name="categoryId" className="input-field" required>
+                                <option value="">Selecciona una categoría</option>
+                                {categories.map(category => (
+                                    <option key={category._id} value={category._id}>{category.name}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div className="input-group">
+                            <label className="input-label">Descripción</label>
+                            <textarea name="description" className="input-field"></textarea>
+                        </div>
+                        <button type="submit" className="btn-primary">Crear</button>
+                    </form>
+
+
+                </Modal>
             </header>
 
             {Object.keys(grouped).map(date => {
