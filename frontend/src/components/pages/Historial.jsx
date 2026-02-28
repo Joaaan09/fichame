@@ -9,12 +9,12 @@ export const Historial = () => {
     // Obtenemos las sesiones del hook
     const { sessions, loading, refetch } = useWorkSessions();
     const [activeDropdown, setActiveDropdown] = useState(null);
-    const [modoModal, setModoModal] = useState(null); // 'edit' | 'delete' | 'create' | null
+    const [modoModal, setModoModal] = useState(null); // 'edit' | 'delete' | 'create' | 'info' | null
     const [selectedSession, setSelectedSession] = useState(null);
     const [error, setError] = useState(null);
     const token = localStorage.getItem("token");
 
-    const { categories } = useOutletContext();
+    const { categories = [] } = useOutletContext() || {};
 
     const handleDelete = async () => {
         const request = await fetch("/api/work-session/remove/" + selectedSession?._id, {
@@ -93,16 +93,66 @@ export const Historial = () => {
     }
 
 
+    // Prepara la sesión seleccionada y abre el modal de confirmación de eliminación
     const openDeleteModal = (session) => {
         setError(null);
         setSelectedSession(session);
         setModoModal('delete');
     };
 
+    // Limpia errores, carga los datos de la sesión seleccionada y abre el modal de edición
     const openEditModal = (session) => {
         setError(null);
         setSelectedSession(session);
         setModoModal('edit');
+    };
+
+    const openInfoModal = (session) => {
+        setError(null);
+        setSelectedSession(session);
+        setModoModal('info');
+    };
+
+    // Helper para obtener el nombre de la categoría
+    const getCategoryName = (categoryData) => {
+        // 1. Si no hay datos, es una entrada normal (sin categoría)
+        if (!categoryData) return "Entrada";
+
+        // 2. Si ya es un objeto con el nombre (ya está poblado)
+        if (typeof categoryData === 'object' && categoryData !== null && categoryData.name) {
+            return categoryData.name;
+        }
+
+        // 3. Extraer el ID único (como string para comparar mejor)
+        let targetId = "";
+        if (typeof categoryData === 'object' && categoryData !== null) {
+            targetId = (categoryData._id || categoryData.id || "").toString();
+        } else {
+            targetId = categoryData.toString();
+        }
+
+        if (!targetId) return "Entrada";
+
+        // 4. Buscar en la lista global de categorías
+        if (!categories || !Array.isArray(categories)) return "Cargando...";
+
+        const found = categories.find(c =>
+            (c._id?.toString() === targetId) ||
+            (c.id?.toString() === targetId)
+        );
+
+        return found ? found.name : "Entrada";
+    };
+
+    // Helper para formatear la duración de una sesión individual
+    const getSessionDuration = (session) => {
+        if (!session?.checkIn) return "0h 0m";
+        if (!session.checkOut) return "En curso";
+
+        const diff = new Date(session.checkOut) - new Date(session.checkIn);
+        const h = Math.floor(diff / 3600000);
+        const m = Math.floor((diff % 3600000) / 60000);
+        return `${h}h ${m}m`;
     };
 
     const toggleDropdown = (id) => {
@@ -197,30 +247,31 @@ export const Historial = () => {
                                     : "En curso";
 
                                 return (
-                                    <div className="history-item" key={session._id}>
+                                    <div className="history-item" key={session._id} onClick={() => openInfoModal(session)}>
                                         <div className="h-time-block">
                                             <span className="h-main-time">{timeIn} - {timeOut}</span>
                                             <div className="h-sub-time">
                                                 <div className={`dot ${session.checkOut ? 'green' : 'green animate-pulse'}`}></div>
-                                                {session.category ? session.category.name : 'Entrada'}
+                                                {getCategoryName(session.category || session.categoryId || session.category_id)}
                                             </div>
                                         </div>
 
+
                                         <div className={`h-total ${!session.checkOut ? 'active' : ''}`}>
-                                            {duration}
+                                            {getSessionDuration(session)}
                                         </div>
 
                                         <div className="settings-wrapper">
-                                            <button className="settings" onClick={() => toggleDropdown(session._id)}>
+                                            <button className="settings" onClick={(e) => { e.stopPropagation(); toggleDropdown(session._id) }}>
                                                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#86868B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="icon icon-tabler icons-tabler-outline icon-tabler-settings"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M10.325 4.317c.426 -1.756 2.924 -1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543 -.94 3.31 .826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756 .426 1.756 2.924 0 3.35a1.724 1.724 0 0 0 -1.066 2.573c.94 1.543 -.826 3.31 -2.37 2.37a1.724 1.724 0 0 0 -2.572 1.065c-.426 1.756 -2.924 1.756 -3.35 0a1.724 1.724 0 0 0 -2.573 -1.066c-1.543 .94 -3.31 -.826 -2.37 -2.37a1.724 1.724 0 0 0 -1.065 -2.572c-1.756 -.426 -1.756 -2.924 0 -3.35a1.724 1.724 0 0 0 1.066 -2.573c-.94 -1.543 .826 -3.31 2.37 -2.37c1 .608 2.296 .07 2.572 -1.065" /><path d="M9 12a3 3 0 1 0 6 0a3 3 0 0 0 -6 0" /></svg>
                                             </button>
                                             {activeDropdown === session._id && (
                                                 <div className="dropdown">
-                                                    <button className="dropdown-item" onClick={() => openEditModal(session)}>
+                                                    <button className="dropdown-item" onClick={(e) => { e.stopPropagation(); openEditModal(session); }}>
                                                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#34C759" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="icon icon-tabler icons-tabler-outline icon-tabler-clock-edit"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M21 12a9 9 0 1 0 -9.972 8.948c.32 .034 .644 .052 .972 .052" /><path d="M12 7v5l2 2" /><path d="M18.42 15.61a2.1 2.1 0 0 1 2.97 2.97l-3.39 3.42h-3v-3l3.42 -3.39" /></svg>
                                                     </button>
 
-                                                    <button className="dropdown-item delete" onClick={() => openDeleteModal(session)}>
+                                                    <button className="dropdown-item delete" onClick={(e) => { e.stopPropagation(); openDeleteModal(session); }}>
                                                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#FF3B30" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="icon icon-tabler icons-tabler-outline icon-tabler-clock-x"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M20.926 13.15a9 9 0 1 0 -7.835 7.784" /><path d="M12 7v5l2 2" /><path d="M22 22l-5 -5" /><path d="M17 22l5 -5" /></svg>
                                                     </button>
                                                 </div>
@@ -233,6 +284,42 @@ export const Historial = () => {
                     </div>
                 )
             })}
+
+
+            <Modal isOpen={modoModal === 'info'}
+                onClose={() => { setModoModal(null); setError(null); }}
+                title="Información de la sesión">
+                {selectedSession && (
+                    <div className="session-info">
+                        <div className="session-info-item">
+                            <span className="session-info-label">Check-in:</span>
+                            <span className="session-info-value">{new Date(selectedSession.checkIn).toLocaleString()}</span>
+                        </div>
+                        <div className="session-info-item">
+                            <span className="session-info-label">Check-out:</span>
+                            <span className="session-info-value">
+                                {selectedSession.checkOut ? new Date(selectedSession.checkOut).toLocaleString() : 'En curso'}
+                            </span>
+                        </div>
+                        <div className="session-info-item">
+                            <span className="session-info-label">Duración:</span>
+                            <span className="session-info-value">
+                                {getSessionDuration(selectedSession)}
+                            </span>
+                        </div>
+                        <div className="session-info-item">
+                            <span className="session-info-label">Categoría:</span>
+                            <span className="session-info-value">
+                                {getCategoryName(selectedSession.category || selectedSession.categoryId || selectedSession.category_id)}
+                            </span>
+                        </div>
+                        <div className="session-info-item">
+                            <span className="session-info-label">Descripción:</span>
+                            <span className="session-info-value">{selectedSession.description || "Sin descripción"}</span>
+                        </div>
+                    </div>
+                )}
+            </Modal>
             <Modal
                 isOpen={modoModal === 'delete'}
                 onClose={() => { setModoModal(null); setError(null); }}
@@ -329,6 +416,6 @@ export const Historial = () => {
                     </div>
                 </div>
             </Modal>
-        </section>
+        </section >
     );
 };

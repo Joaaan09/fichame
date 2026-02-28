@@ -1259,3 +1259,39 @@ body {
     color: var(--accent-blue);
     background: rgba(0, 113, 227, 0.1);
 }
+/* --- SESSION INFO MODAL --- */
+.session-info {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 8px 4px;
+}
+
+.session-info-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    border-bottom: 1px solid var(--border-light);
+    padding-bottom: 12px;
+}
+
+.session-info-item:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.session-info-label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.session-info-value {
+    font-size: 1.05rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    line-height: 1.4;
+    word-break: break-word;
+}
