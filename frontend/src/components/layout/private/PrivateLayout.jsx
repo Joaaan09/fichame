@@ -14,10 +14,20 @@ export const PrivateLayout = () => {
 
     // Seleccionar la primera categoría por defecto cuando cargan
     useEffect(() => {
-        if (categories.length > 0 && !selectedCategory) {
-            setSelectedCategory(categories[0]);
+        if (categories.length > 0) {
+            // Comprobamos si la categoría seleccionada actualmente sigue existiendo en el nuevo array de categories
+            const categoryStillExists = categories.find(c => c._id === selectedCategory?._id);
+
+            if (!categoryStillExists) {
+                // Si la hemos borrado, seleccionamos la primera de la lista por defecto
+                setSelectedCategory(categories[0]);
+            }
+        } else {
+            // Si nos hemos quedado sin ninguna categoría
+            setSelectedCategory(null);
         }
-    }, [categories, selectedCategory]);
+    }, [categories]); // "Vigilante" que se ejecuta cada vez que categories cambia
+
 
     return (
         <>
