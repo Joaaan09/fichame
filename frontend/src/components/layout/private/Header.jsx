@@ -1,11 +1,52 @@
 import React from 'react'
 import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
+import { Modal } from '../../common/Modal';
 
-export const Header = ({ categories, selectedCategory, setSelectedCategory }) => {
+export const Header = ({ categories, selectedCategory, setSelectedCategory, setCategories }) => {
 
     // Obtener categoría
     const [showDropdown, setShowDropdown] = useState(false);
+    const [error, setError] = useState(null);
+    const user = JSON.parse(localStorage.getItem("user"));
+
+    const [modoModal, setModoModal] = useState(null);
+
+    const openCreateModal = () => {
+        setError(null);
+        setModoModal('create');
+    };
+
+
+    const handleNewCategory = async (e) => {
+        e.preventDefault();
+        const dataFrom = new FormData(e.target);
+        const { name, color } = Object.fromEntries(dataFrom.entries());
+
+        const request = await fetch("/api/category/create", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": localStorage.getItem("token")
+            },
+            body: JSON.stringify({
+                user: user._id,
+                name,
+                color
+            }),
+        });
+
+        if (request.ok) {
+            const data = await request.json();
+            setCategories([...categories, data.category]);
+            setSelectedCategory(data.category);
+            setShowDropdown(false);
+            setModoModal(null);
+        }
+        else {
+            setError("Error al crear la categoría");
+        }
+    }
 
     return (
         <header className="header">
@@ -31,10 +72,32 @@ export const Header = ({ categories, selectedCategory, setSelectedCategory }) =>
                                 {cat.name}
                             </div>
                         ))}
+                        <div className="category-dropdown-item" onClick={openCreateModal}>
+                            + Nueva categoría
+                        </div>
                     </div>
+
                 )}
 
             </div>
+            <Modal
+                isOpen={modoModal === 'create'}
+                onClose={() => { setModoModal(null); setError(null); }}
+                title="Nueva categoría"
+            >
+                <form onSubmit={handleNewCategory}>
+                    {error && <div className="error-msg" style={{ display: 'block', marginBottom: '1rem' }}>{error}</div>}
+                    <div className="input-group">
+                        <label className="input-label">Nombre</label>
+                        <input type="text" name="name" className="input-field" placeholder="Ej. Diseño, Backend..." required />
+                    </div>
+                    <div className="input-group">
+                        <label className="input-label">Color del punto</label>
+                        <input type="color" name="color" className="input-field" style={{ height: '40px', padding: '2px', cursor: 'pointer' }} />
+                    </div>
+                    <button type="submit" className="btn-primary">Crear</button>
+                </form>
+            </Modal>
         </header>
     )
 }
