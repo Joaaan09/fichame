@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { Modal } from '../../common/Modal';
 
-export const Header = ({ categories, selectedCategory, setSelectedCategory, refetchCategories }) => {
+export const Header = ({ categories, selectedCategory, selectCategory, setSelectedCategory, refetchCategories }) => {
 
     // Obtener categoría
     const [showDropdown, setShowDropdown] = useState(false);
@@ -17,6 +17,8 @@ export const Header = ({ categories, selectedCategory, setSelectedCategory, refe
         setError(null);
         setModoModal('create');
     };
+
+
 
 
     const handleNewCategory = async (e) => {
@@ -72,7 +74,7 @@ export const Header = ({ categories, selectedCategory, setSelectedCategory, refe
                             {categories.map(cat => (
                                 <div key={cat._id} onClick={(e) => {
                                     e.stopPropagation();
-                                    setSelectedCategory(cat);
+                                    selectCategory(cat._id); 
                                     setShowDropdown(false);
                                 }}>
                                     {cat.name}

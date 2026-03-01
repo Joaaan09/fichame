@@ -12,6 +12,15 @@ export const PrivateLayout = () => {
     const { categories, refetchCategories, loading: categoriesLoading } = useCategories();
     const [selectedCategory, setSelectedCategory] = useState(null);
 
+    // Guardar cuando selecciona categoría
+    const selectCategory = (categoryId) => {
+        const category = categories.find(c => c._id === categoryId);
+        if (category) {
+            setSelectedCategory(category);
+            localStorage.setItem('lastCategory', categoryId);
+        }
+    };
+
     // Seleccionar la primera categoría por defecto cuando cargan
     useEffect(() => {
         if (categories.length > 0) {
@@ -28,10 +37,20 @@ export const PrivateLayout = () => {
         }
     }, [categories]); // "Vigilante" que se ejecuta cada vez que categories cambia
 
+    // Recuperar al cargar el componente
+    useEffect(() => {
+        const lastCategoryId = localStorage.getItem('lastCategory');
+        if (lastCategoryId && categories.length > 0) {
+            const category = categories.find(c => c._id === lastCategoryId);
+            if (category) {
+                setSelectedCategory(category);
+            }
+        }
+    }, [categories]);
 
     return (
         <>
-            <Header categories={categories} selectedCategory={selectedCategory} setSelectedCategory={setSelectedCategory} refetchCategories={refetchCategories} />
+            <Header categories={categories} selectCategory = {selectCategory} selectedCategory={selectedCategory} setSelectedCategory={setSelectedCategory} refetchCategories={refetchCategories} />
             <main className="main-stage">
                 {auth?.id ?
                     <Outlet context={{ selectedCategory, categories, refetchCategories }} />
