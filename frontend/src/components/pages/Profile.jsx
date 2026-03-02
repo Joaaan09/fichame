@@ -156,15 +156,18 @@ export const Profile = () => {
 
             <div className="profile-header">
                 <div className="avatar-large">
-                    JP
-                    <div className="avatar-edit-badge">
+                    <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                        <circle cx="12" cy="7" r="4" />
+                    </svg>
+                    {/* <div className="avatar-edit-badge">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
                             stroke="white" strokeWidth="3"
                             strokeLinecap="round" strokeLinejoin="round">
                             <path d="M12 20h9" />
                             <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
                         </svg>
-                    </div>
+                    </div> */}
                 </div>
                 <h2 className="user-name">{user.name}</h2>
                 <p className="user-role">{user.email}</p>

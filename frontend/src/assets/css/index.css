@@ -299,7 +299,7 @@ body {
     justify-content: center;
     font-size: 2rem;
     font-weight: 600;
-    color: var(--text-secondary);
+    color: var(--text-primary);
     margin-bottom: 16px;
     box-shadow: var(--shadow-card);
     position: relative;
