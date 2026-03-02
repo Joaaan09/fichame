@@ -146,6 +146,36 @@ export const Historial = () => {
         return found ? found.name : "Categoría eliminada";
     };
 
+    const getColorCategory = (categoryData) => {
+        // 1. Si no hay datos, es una entrada normal (sin categoría)
+        if (!categoryData) return "#86868B";
+
+        // 2. Si ya es un objeto con el color (ya está poblado)
+        if (typeof categoryData === 'object' && categoryData !== null && categoryData.color) {
+            return categoryData.color;
+        }
+
+        // 3. Extraer el ID único (como string para comparar mejor)
+        let targetId = "";
+        if (typeof categoryData === 'object' && categoryData !== null) {
+            targetId = (categoryData._id || categoryData.id || "").toString();
+        } else {
+            targetId = categoryData.toString();
+        }
+
+        if (!targetId) return "#86868B";
+
+        // 4. Buscar en la lista global de categorías
+        if (!categories || !Array.isArray(categories)) return "#86868B";
+
+        const found = categories.find(c =>
+            (c._id?.toString() === targetId) ||
+            (c.id?.toString() === targetId)
+        );
+
+        return found ? found.color : "#86868B";
+    };
+
     // Helper para formatear la duración de una sesión individual
     const getSessionDuration = (session) => {
         if (!session?.checkIn) return "0h 0m";
@@ -198,10 +228,6 @@ export const Historial = () => {
         <section className="page-content">
             <header className="history-header">
                 <h2>Historial</h2>
-                <button className="btn-add-session" onClick={() => { setModoModal('create') }}>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14" /><path d="M12 5v14" /></svg>
-                    Nueva jornada
-                </button>
                 <select
                     className="history-category-select"
                     name="category"
@@ -213,6 +239,10 @@ export const Historial = () => {
                         <option key={c._id || c.id} value={c._id || c.id}>{c.name}</option>
                     ))}
                 </select>
+                <button className="btn-add-session" onClick={() => { setModoModal('create') }}>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14" /><path d="M12 5v14" /></svg>
+                    Nueva jornada
+                </button>
 
                 <Modal isOpen={modoModal === 'create'}
                     onClose={() => { setModoModal(null); setError(null); }}
@@ -271,7 +301,7 @@ export const Historial = () => {
                                         <div className="h-time-block">
                                             <span className="h-main-time">{timeIn} - {timeOut}</span>
                                             <div className="h-sub-time">
-                                                <div className={`dot ${session.checkOut ? 'green' : 'green animate-pulse'}`}></div>
+                                                <div className={`dot ${!session.checkOut ? 'animate-pulse' : ''}`} style={{ backgroundColor: session.checkOut ? getColorCategory(session.category || session.categoryId || session.category_id) : '#00AA00' }}></div>
                                                 {getCategoryName(session.category || session.categoryId || session.category_id)}
                                             </div>
                                         </div>
