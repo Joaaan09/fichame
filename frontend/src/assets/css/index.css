@@ -1262,6 +1262,12 @@ body {
 .form-row {
     display: flex;
     gap: 10px;
+    flex-wrap: wrap;
+}
+
+.form-row select {
+    flex: 1;
+    min-width: 100px;
 }
 
 .profile-summary-card {

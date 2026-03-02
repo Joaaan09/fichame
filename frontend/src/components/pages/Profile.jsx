@@ -14,15 +14,22 @@ export const Profile = () => {
     const [modalError, setModalError] = useState(null); // Error específico para modales de perfil
     const { sessions } = useWorkSessions();
     const { darkMode, toggleTheme } = useTheme();
-    const { categories = [], refetchCategories } = useOutletContext() || {};
+    const { categories = [], refetchCategories, selectedCategory } = useOutletContext() || {};
 
 
     const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
     const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+    const [selectedCategoryModal, setSelectedCategoryModal] = useState('');
 
     const handleLogout = () => {
         localStorage.removeItem('token');
         window.location.href = '/';
+    }
+
+    // Sesiones filtradas por categoria
+    const filteredSessions = (categorie) => {
+        if (!categorie) return sessions;
+        return sessions.filter(s => s.category === categorie._id || s.category === categorie.id);
     }
 
     const years = Array.from(
@@ -304,6 +311,16 @@ export const Profile = () => {
                                 <option key={y.value} value={y.value}>{y.label}</option>
                             ))}
                         </select>
+                        <select 
+                            name="category"
+                            value={selectedCategoryModal}
+                            onChange={(e) => setSelectedCategoryModal(e.target.value)}
+                        >
+                            <option value=''>Todas las categorías</option>
+                            {categories.map(c => (
+                                <option key={c._id || c.id} value={c._id || c.id}>{c.name}</option>
+                            ))}
+                        </select>
                     </div>
 
                     <div className="profile-summary-card">
@@ -313,7 +330,10 @@ export const Profile = () => {
                         <h2 className="profile-summary-value">
                             {calculateTotalHours(sessions.filter(s => {
                                 const date = new Date(s.checkIn);
-                                return (date.getMonth() + 1) === selectedMonth && date.getFullYear() === selectedYear;
+                                const monthYearMatch = (date.getMonth() + 1) === selectedMonth && date.getFullYear() === selectedYear;
+                                const categoryId = typeof s.categoryId === 'object' ? (s.categoryId?._id || s.categoryId?.id) : s.categoryId;
+                                const categoryMatch = selectedCategoryModal === '' || categoryId === selectedCategoryModal;
+                                return monthYearMatch && categoryMatch;
                             }))}
                         </h2>
                     </div>
