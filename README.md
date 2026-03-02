@@ -463,27 +463,4 @@ Frontend (fetch) → Vite Proxy → Express Router → [auth middleware] → Con
                                                                     Respuesta JSON
 ```
 
-### Reglas importantes
 
-1. **Siempre `await`** en llamadas a Mongoose (`.find()`, `.save()`, `.findById()`, etc.)
-2. **Nunca catch vacío** — siempre devolver respuesta de error con `res.status(500).json(...)`
-3. **Comparar ObjectId con string** usando `.toString()` → `category.user.toString() !== req.user.id`
-4. **Password nunca en respuestas** — devolver solo `id`, `name`, `email`
-5. **JWT payload usa `id`** — no `_id`. Los modelos Mongoose usan `_id`
-6. **React: no tocar el DOM** — usar `useState`, `useRef`, `useEffect` en vez de `document.getElementById`
-7. **SVG en React** — usar camelCase: `strokeLinecap`, `strokeLinejoin`
-8. **Rebuild backend tras cambios** → `docker compose up -d --build server`
-9. **Frontend en dev** → `cd frontend && npm run dev` (hot reload automático)
-
----
-
-## 📝 Pendiente por Implementar
-
-- [ ] **Category**: Función editar categoría
-- [ ] **User**: Ruta de perfil (`/profile/:id`)
-- [ ] **Frontend**: Página de historial de jornadas
-- [ ] **Frontend**: Página de perfil de usuario
-- [ ] **Frontend**: Navegación móvil (mobile nav)
-- [ ] **MongoDB**: Añadir autenticación para producción
-- [ ] **Seguridad**: Validar formato de email en login
-- [ ] **Register**: Migrar bcrypt de callback a async/await
