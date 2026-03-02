@@ -13,6 +13,8 @@ export const Historial = () => {
     const [selectedSession, setSelectedSession] = useState(null);
     const [error, setError] = useState(null);
     const token = localStorage.getItem("token");
+    const [selectedCategoryModal, setSelectedCategoryModal] = useState('');
+
 
     const { categories = [] } = useOutletContext() || {};
 
@@ -179,10 +181,16 @@ export const Historial = () => {
     }
 
 
+    const filteredSessions = sessions.filter(s => {
+        if (selectedCategoryModal === '') return true;
+        const categoryId = typeof s.categoryId === 'object' ? (s.categoryId?._id || s.categoryId?.id) : s.categoryId;
+        return categoryId === selectedCategoryModal;
+    });
+
 
     // Agrupamos las sesiones usando la función que creaste
     // 'grouped' será un objeto tipo: { "lunes...": [sesion1, sesion2], "martes...": [...] }
-    const grouped = groupSessionsByDate(sessions);
+    const grouped = groupSessionsByDate(filteredSessions);
 
     if (loading) return <section className="page-content"><div className="group-label">Cargando...</div></section>;
 
@@ -194,6 +202,18 @@ export const Historial = () => {
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14" /><path d="M12 5v14" /></svg>
                     Nueva jornada
                 </button>
+                <select
+                    className="history-category-select"
+                    name="category"
+                    value={selectedCategoryModal}
+                    onChange={(e) => setSelectedCategoryModal(e.target.value)}
+                >
+                    <option value=''>Todas las categorías</option>
+                    {categories.map(c => (
+                        <option key={c._id || c.id} value={c._id || c.id}>{c.name}</option>
+                    ))}
+                </select>
+
                 <Modal isOpen={modoModal === 'create'}
                     onClose={() => { setModoModal(null); setError(null); }}
                     title="Nueva jornada" >
