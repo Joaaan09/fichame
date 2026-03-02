@@ -20,17 +20,14 @@ export const Profile = () => {
     const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
     const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
     const [selectedCategoryModal, setSelectedCategoryModal] = useState('');
+    const [categoryModalMode, setCategoryModalMode] = useState('list'); // 'list' | 'edit'
+    const [selectedCategoryToEdit, setSelectedCategoryToEdit] = useState(null);
 
     const handleLogout = () => {
         localStorage.removeItem('token');
         window.location.href = '/';
     }
 
-    // Sesiones filtradas por categoria
-    const filteredSessions = (categorie) => {
-        if (!categorie) return sessions;
-        return sessions.filter(s => s.category === categorie._id || s.category === categorie.id);
-    }
 
     const years = Array.from(
         { length: 100 },
@@ -104,6 +101,45 @@ export const Profile = () => {
             await refetchCategories(); // Refrescar del servidor
         } else {
             setModalError({ type: 'error', message: data.message || 'Error al eliminar' });
+        }
+    }
+
+    const openEditCategoryMode = (category) => {
+        setSelectedCategoryToEdit(category);
+        setCategoryModalMode('edit');
+    };
+
+    const handleEditCategory = async (e) => {
+        e.preventDefault();
+        
+        const formData = new FormData(e.target);
+        const updatedData = {
+            name: formData.get("name"),
+            color: formData.get("color")
+        };
+
+        try {
+            const request = await fetch("/api/category/update/" + selectedCategoryToEdit._id, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": localStorage.getItem("token")
+                },
+                body: JSON.stringify(updatedData)
+            });
+
+            const data = await request.json();
+
+            if (data.status === "success") {
+                setModalError({ type: 'success', message: 'Categoría actualizada correctamente' });
+                setCategoryModalMode('list');
+                await refetchCategories();
+            } else {
+                setModalError({ type: 'error', message: data.message || 'Error al actualizar' });
+            }
+        } catch (error) {
+            console.error("Error al actualizar:", error);
+            setModalError({ type: 'error', message: 'Error de conexión con el servidor' });
         }
     }
 
@@ -203,24 +239,53 @@ export const Profile = () => {
                 </a>
 
                 <Modal isOpen={modoModal === 'categorias'}
-                    onClose={() => { setModoModal(null); setModalError(null); setStatus(null); }}
-                    title="Gestionar categorias">
+                    onClose={() => { setModoModal(null); setModalError(null); setCategoryModalMode('list'); }}
+                    title={categoryModalMode === 'list' ? "Gestionar categorias" : "Editar categoría"}>
                     {modalError && (
                         <div className={`status-message ${modalError.type}`}>
                             {modalError.message}
                         </div>
                     )}
-                    {categories.map((category) => (
-                        <div key={category._id || category.id} className="category-item">
-                            <div className="category-color" style={{ backgroundColor: category.color }}></div>
-                            <div className="category-name">{category.name}</div>
-                            <svg onClick={() => deleteCategory(category._id || category.id)} width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M3 6h18"></path>
-                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path>
-                                <path d="M10 11v6M14 11v6"></path>
-                            </svg>
-                        </div>
-                    ))}
+                    
+                    {categoryModalMode === 'list' ? (
+                        // Vista de lista de categorías
+                        <>
+                            {categories.map((category) => (
+                                <div key={category._id || category.id} className="category-item">
+                                    <div className="category-color" style={{ backgroundColor: category.color }}></div>
+                                    <div className="category-name">{category.name}</div>
+                                    <div style={{ display: 'flex', gap: '8px' }}>
+                                        <svg onClick={() => openEditCategoryMode(category)} width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ cursor: 'pointer', color: '#34C759' }}>
+                                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                                            <circle cx="12" cy="7" r="4" />
+                                            <path d="M12 16v6M9 19h6" />
+                                        </svg>
+                                        <svg onClick={() => deleteCategory(category._id || category.id)} width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ cursor: 'pointer' }}>
+                                            <path d="M3 6h18"></path>
+                                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path>
+                                            <path d="M10 11v6M14 11v6"></path>
+                                        </svg>
+                                    </div>
+                                </div>
+                            ))}
+                        </>
+                    ) : (
+                        // Vista de edición
+                        <form onSubmit={handleEditCategory}>
+                            <div className="input-group">
+                                <label className="input-label">Nombre</label>
+                                <input type="text" name="name" className="input-field" defaultValue={selectedCategoryToEdit?.name} required />
+                            </div>
+                            <div className="input-group">
+                                <label className="input-label">Color</label>
+                                <input type="color" name="color" className="input-field" defaultValue={selectedCategoryToEdit?.color} style={{ height: '40px', cursor: 'pointer' }} required />
+                            </div>
+                            <div style={{ display: 'flex', gap: '12px', marginTop: '16px' }}>
+                                <button type="button" className="btn-ios cancel" onClick={() => { setCategoryModalMode('list'); setModalError(null); }}>Volver</button>
+                                <button type="submit" className="btn-primary">Guardar cambios</button>
+                            </div>
+                        </form>
+                    )}
                 </Modal>
             </div>
 
