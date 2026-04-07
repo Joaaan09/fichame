@@ -1,6 +1,6 @@
 import React from 'react'
 import { useState } from 'react';
-import { NavLink } from 'react-router-dom';
+import { Link, NavLink } from 'react-router-dom';
 import { Modal } from '../../common/Modal';
 
 export const Header = ({ categories, selectedCategory, selectCategory, setSelectedCategory, refetchCategories }) => {
@@ -54,7 +54,9 @@ export const Header = ({ categories, selectedCategory, selectCategory, setSelect
     return (
         <>
             <header className="header">
-                <div className="brand">FichaMe</div>
+                <Link to="/home" className="brand">
+                    FichaMe
+                </Link>
 
                 <nav className="desktop-nav">
                     <NavLink to="/home" end className={({ isActive }) => isActive ? "nav-link active" : "nav-link"}>Dashboard</NavLink>
@@ -74,7 +76,7 @@ export const Header = ({ categories, selectedCategory, selectCategory, setSelect
                             {categories.map(cat => (
                                 <div key={cat._id} onClick={(e) => {
                                     e.stopPropagation();
-                                    selectCategory(cat._id); 
+                                    selectCategory(cat._id);
                                     setShowDropdown(false);
                                 }}>
                                     {cat.name}

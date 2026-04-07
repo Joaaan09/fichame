@@ -538,6 +538,19 @@ body {
     border-radius: 50%;
 }
 
+.brand {
+    font-size: 1.1rem;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    color: var(--text-primary);
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.brand:hover {
+    color: var(--accent-blue);
+}
+
 /* --- MAIN STAGE --- */
 .main-stage {
     flex: 1;
@@ -992,7 +1005,7 @@ body {
     right: 0;
     background: var(--bg-card);
     border-radius: 16px;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.14);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.14);
     border: 1px solid var(--border-light);
     padding: 16px;
     display: flex;
