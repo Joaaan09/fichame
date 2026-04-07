@@ -1,7 +1,6 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 // Importamos tanto el hook como la función de utilidad
 import { useWorkSessions, groupSessionsByDate } from '../../hooks/useWorkSessions';
-import { useState } from 'react';
 import { Modal } from '../common/Modal';
 import { useOutletContext } from 'react-router-dom';
 
@@ -14,6 +13,20 @@ export const Historial = () => {
     const [error, setError] = useState(null);
     const token = localStorage.getItem("token");
     const [selectedCategoryModal, setSelectedCategoryModal] = useState('');
+    const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
+    const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+    const [showFilter, setShowFilter] = useState(false);
+    const filterRef = useRef(null);
+
+    useEffect(() => {
+        const handleClickOutside = (e) => {
+            if (filterRef.current && !filterRef.current.contains(e.target)) {
+                setShowFilter(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
 
 
     const { categories = [] } = useOutletContext() || {};
@@ -212,15 +225,37 @@ export const Historial = () => {
 
 
     const filteredSessions = sessions.filter(s => {
-        if (selectedCategoryModal === '') return true;
+        const date = new Date(s.checkIn);
+        const monthMatch = (date.getMonth() + 1) === selectedMonth;
+        const yearMatch = date.getFullYear() === selectedYear;
         const categoryId = typeof s.categoryId === 'object' ? (s.categoryId?._id || s.categoryId?.id) : s.categoryId;
-        return categoryId === selectedCategoryModal;
+        const categoryMatch = selectedCategoryModal === '' || categoryId === selectedCategoryModal;
+        return monthMatch && yearMatch && categoryMatch;
     });
 
+    const months = [
+        { value: 1, label: "Enero" },
+        { value: 2, label: "Febrero" },
+        { value: 3, label: "Marzo" },
+        { value: 4, label: "Abril" },
+        { value: 5, label: "Mayo" },
+        { value: 6, label: "Junio" },
+        { value: 7, label: "Julio" },
+        { value: 8, label: "Agosto" },
+        { value: 9, label: "Septiembre" },
+        { value: 10, label: "Octubre" },
+        { value: 11, label: "Noviembre" },
+        { value: 12, label: "Diciembre" }
+    ];
+
+    const years = Array.from(
+        new Set(sessions.map(s => new Date(s.checkIn).getFullYear()))
+    ).sort((a, b) => b - a);
 
     // Agrupamos las sesiones usando la función que creaste
     // 'grouped' será un objeto tipo: { "lunes...": [sesion1, sesion2], "martes...": [...] }
     const grouped = groupSessionsByDate(filteredSessions);
+
 
     if (loading) return <section className="page-content"><div className="group-label">Cargando...</div></section>;
 
@@ -228,17 +263,63 @@ export const Historial = () => {
         <section className="page-content">
             <header className="history-header">
                 <h2>Historial</h2>
-                <select
-                    className="history-category-select"
-                    name="category"
-                    value={selectedCategoryModal}
-                    onChange={(e) => setSelectedCategoryModal(e.target.value)}
-                >
-                    <option value=''>Todas las categorías</option>
-                    {categories.map(c => (
-                        <option key={c._id || c.id} value={c._id || c.id}>{c.name}</option>
-                    ))}
-                </select>
+                <div className="filter-wrapper" ref={filterRef}>
+                    <button
+                        className={`btn-filter ${showFilter ? 'active' : ''}`}
+                        onClick={() => setShowFilter(prev => !prev)}
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="4" y1="6" x2="20" y2="6" /><line x1="8" y1="12" x2="16" y2="12" /><line x1="11" y1="18" x2="13" y2="18" /></svg>
+                        Filtrar
+                        {(selectedCategoryModal !== '' || selectedMonth !== new Date().getMonth() + 1 || selectedYear !== new Date().getFullYear()) && (
+                            <span className="filter-badge"></span>
+                        )}
+                    </button>
+                    {showFilter && (
+                        <div className="filter-panel">
+                            <div className="filter-panel-group">
+                                <label className="filter-panel-label">Categoría</label>
+                                <select
+                                    className="history-category-select"
+                                    name="category"
+                                    value={selectedCategoryModal}
+                                    onChange={(e) => setSelectedCategoryModal(e.target.value)}
+                                >
+                                    <option value=''>Todas</option>
+                                    {categories.map(c => (
+                                        <option key={c._id || c.id} value={c._id || c.id}>{c.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div className="filter-panel-group">
+                                <label className="filter-panel-label">Mes</label>
+                                <select
+                                    name="month"
+                                    className="history-category-select"
+                                    value={selectedMonth}
+                                    onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
+                                >
+                                    {months.map(m => (
+                                        <option key={m.value} value={m.value}>{m.label}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div className="filter-panel-group">
+                                <label className="filter-panel-label">Año</label>
+                                <select
+                                    name="year"
+                                    className="history-category-select"
+                                    value={selectedYear}
+                                    onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+                                >
+                                    {years.map(year => (
+                                        <option key={year} value={year}>{year}</option>
+                                    ))}
+                                </select>
+                            </div>
+                        </div>
+                    )}
+                </div>
+
                 <button className="btn-add-session" onClick={() => { setModoModal('create') }}>
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14" /><path d="M12 5v14" /></svg>
                     Nueva jornada
