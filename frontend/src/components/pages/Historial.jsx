@@ -4,6 +4,7 @@ import { useWorkSessions, groupSessionsByDate } from '../../hooks/useWorkSession
 import { Modal } from '../common/Modal';
 import { useOutletContext } from 'react-router-dom';
 
+
 export const Historial = () => {
     // Obtenemos las sesiones del hook
     const { sessions, loading, refetch } = useWorkSessions();
